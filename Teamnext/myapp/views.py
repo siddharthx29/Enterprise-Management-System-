@@ -1,4 +1,4 @@
-﻿import random
+import random
 import time
 
 from datetime import timedelta, datetime
@@ -76,19 +76,18 @@ def send_otp(request):
             messages.error(request, "Enter valid email")
             return redirect("login")
 
-        # Support multiple emails separated by comma
-        email_list = [e.strip() for e in email_input.split(',') if e.strip()]
+        email_list = [e.strip().lower() for e in email_input.split(',') if e.strip()]
         
         # We check if at least one email exists in the system if it's for login
         if purpose in ('login', 'password_reset'):
             exists = False
             for email in email_list:
-                if Company.objects.filter(email=email).exists() or Employee.objects.filter(email=email).exists():
+                if Company.objects.filter(email__iexact=email).exists() or Employee.objects.filter(email__iexact=email).exists():
                     exists = True
                     break
             
             if not exists:
-                messages.error(request, f'None of these emails are registered.')
+                messages.error(request, 'None of these emails are registered.')
                 return redirect('login')
 
         otp = str(random.randint(1000, 9999))
@@ -280,13 +279,13 @@ def verify_otp(request):
 
         request.session["verified"] = True
 
-        email = request.session.get("otp_email")
+        email = (request.session.get("otp_email") or '').strip().lower()
 
         name = email
 
         company_name = "TeamNext"
 
-        co = Company.objects.filter(email=email).first()
+        co = Company.objects.filter(email__iexact=email).first()
 
         if co:
 
@@ -296,7 +295,7 @@ def verify_otp(request):
 
         else:
 
-            emp = Employee.objects.filter(email=email).first()
+            emp = Employee.objects.filter(email__iexact=email).first()
 
             if emp:
 
@@ -421,7 +420,7 @@ def password_login(request):
 
         return redirect('login')
 
-    co = Company.objects.filter(email=email, password=password).first()
+    co = Company.objects.filter(email__iexact=email, password=password).first()
 
     if co:
 
@@ -435,7 +434,7 @@ def password_login(request):
 
         return redirect('dashboard')
 
-    emp = Employee.objects.filter(email=email, password=password).first()
+    emp = Employee.objects.filter(email__iexact=email, password=password).first()
 
     if emp:
 
@@ -627,7 +626,7 @@ def set_password(request):
 
         email = (email or '').strip().lower()
 
-        co = Company.objects.filter(email=email).first()
+        co = Company.objects.filter(email__iexact=email).first()
 
         if co:
 
@@ -637,7 +636,7 @@ def set_password(request):
 
         else:
 
-            emp = Employee.objects.filter(email=email).first()
+            emp = Employee.objects.filter(email__iexact=email).first()
 
             if emp:
 
@@ -703,7 +702,7 @@ def dashboard(request):
 
         return redirect("login")
 
-    email = request.session.get("otp_email")
+    email = (request.session.get("otp_email") or '').strip().lower()
 
     is_new_user = not request.session.get("has_logged_in_before", False)
 
@@ -721,9 +720,9 @@ def dashboard(request):
 
     company_name = request.session.get("company_name")
 
-    co = Company.objects.filter(email=email).first()
+    co = Company.objects.filter(email__iexact=email).first()
 
-    emp = Employee.objects.filter(email=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
 
     if not co and emp:
 
@@ -735,7 +734,7 @@ def dashboard(request):
 
         return redirect('login')
 
-    is_company_admin = (Company.objects.filter(email=email).exists())
+    is_company_admin = (Company.objects.filter(email__iexact=email).exists())
 
     company_name = co.name
 
