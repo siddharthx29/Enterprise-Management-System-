@@ -1,0 +1,429 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Center - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .mail-card {
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: #FAFBFD;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .mail-card:hover {
+            background: #F0F2F7;
+            border-color: var(--border-color);
+        }
+
+        .mail-scroll {
+            max-height: 380px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Email Center</span>
+            </div>
+            <div class="topbar-right">
+                <div style="font-size: 12px; color: var(--text-muted);">{{ email }}</div>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Compose Box -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Compose Enterprise Dispatch</span>
+                </div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <input id="to" placeholder="To: recipient@example.com">
+                    </div>
+                    <div class="form-group">
+                        <input id="subject" placeholder="Subject">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="body" rows="5" placeholder="Write your email memo here..."></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button id="sendBtn" class="btn btn-primary">Send Email</button>
+                        <button id="saveBtn" class="btn btn-ghost">Save Draft</button>
+                        <div id="status" style="font-size: 12px; margin-left: 8px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mailboxes Row -->
+            <div class="grid-2">
+                <!-- Inbox -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Inbox Feed</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="mail-scroll" id="inboxList">
+                            {% if inbox and inbox|length > 0 %}
+                            {% for m in inbox %}
+                            <div class="mail-card" onclick="openEmailObj(this)">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                    <strong class="em-subj" style="font-size: 13px; color: var(--text-primary);">{{ m.subject }}</strong>
+                                    <span class="em-from" style="font-size: 11px; color: var(--text-muted);">{{ m.from }}</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">{{ m.body|truncatechars:90 }}</div>
+                                <div class="em-body" style="display: none;">{{ m.body }}</div>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 20px;">No inbox messages.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drafts & Sent Tabs or Grid -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Drafts -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Saved Drafts</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="mail-scroll" id="draftsList" style="max-height: 160px;">
+                                {% if drafts and drafts|length > 0 %}
+                                {% for d in drafts %}
+                                <div class="mail-card" style="cursor: default;">
+                                    <div style="font-weight: 600; font-size: 12px; color: var(--text-primary);">{{ d.subject }}</div>
+                                    <div style="font-size: 11px; color: var(--text-muted);">To: {{ d.to }}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">{{ d.body|truncatechars:60 }}</div>
+                                    <div style="margin-top: 6px; display: flex; gap: 6px;">
+                                        <button class="btn btn-ghost btn-sm loadDraftBtn" data-idx="{{ forloop.counter0 }}">Load</button>
+                                        <button class="btn btn-danger btn-sm delDraftBtn" data-idx="{{ forloop.counter0 }}">Delete</button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 12px;">No saved drafts.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sent Items -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Sent Items</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="mail-scroll" style="max-height: 160px;">
+                                {% if sent and sent|length > 0 %}
+                                {% for m in sent %}
+                                <div class="mail-card">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                        <strong style="font-size: 12px; color: var(--text-primary);">{{ m.subject }}</strong>
+                                        <span style="font-size: 11px; color: var(--text-muted);">To: {{ m.to }}</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">{{ m.body|truncatechars:80 }}</div>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div style="color: var(--text-muted); font-size: 12px; text-align: center; padding: 12px;">No sent messages.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Email Modal Preview -->
+    <div id="emailModal" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title" id="modalSubject">Subject</span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">
+                    From: <strong id="modalFrom" style="color: var(--text-primary);">sender@example.com</strong>
+                </div>
+                <div id="modalBody" style="background: #FAFBFD; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; line-height: 1.5; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
+                    Email content...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sendBtn = document.getElementById('sendBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const status = document.getElementById('status');
+        const inboxList = document.getElementById('inboxList');
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loader = document.createElement('div');
+            loader.id = 'imapLoader';
+            loader.innerHTML = '<div style="padding:10px; text-align:center; font-size:12px; color:var(--text-muted);">Checking external mailboxes...</div>';
+            if (inboxList && inboxList.innerText.includes('No inbox')) {
+                inboxList.innerHTML = '';
+            }
+            if (inboxList) inboxList.prepend(loader);
+
+            try {
+                const res = await fetch('/api/email/fetch/');
+                const data = await res.json();
+                if (data.status === 'ok' && data.emails && data.emails.length > 0) {
+                    renderAsyncEmails(data.emails);
+                } else {
+                    loader.innerHTML = '<div style="padding:6px; font-size:11px; color:var(--text-muted); text-align:center;">Inbox up to date.</div>';
+                    setTimeout(() => loader.remove(), 2000);
+                }
+            } catch (e) {
+                if (loader) loader.innerHTML = '<div style="padding:6px; font-size:11px; color:var(--text-muted); text-align:center;">Inbox ready.</div>';
+            }
+        });
+
+        function renderAsyncEmails(list) {
+            const loader = document.getElementById('imapLoader');
+            if (loader) loader.remove();
+
+            list.forEach(m => {
+                const el = document.createElement('div');
+                el.className = 'mail-card';
+                el.style.borderLeft = '3px solid var(--primary-accent)';
+                el.innerHTML = `
+                    <div onclick="openEmailObj(this)">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:2px">
+                            <strong class="em-subj" style="font-size:13px; color:var(--text-primary);">${escapeHtml(m.subject)}</strong>
+                            <span class="em-from" style="font-size:11px; color:var(--text-muted);">${escapeHtml(m.from)}</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); line-height:1.4;">${escapeHtml(m.body).slice(0, 90)}...</div>
+                        <div class="em-body" style="display:none;">${escapeHtml(m.body)}</div>
+                    </div>
+                `;
+                inboxList.prepend(el);
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function openEmailObj(el) {
+            const subj = el.querySelector('.em-subj').innerText;
+            const from = el.querySelector('.em-from').innerText;
+            const body = el.querySelector('.em-body').innerText;
+
+            document.getElementById('modalSubject').innerText = subj;
+            document.getElementById('modalFrom').innerText = from;
+            document.getElementById('modalBody').innerText = body;
+
+            document.getElementById('emailModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('emailModal').classList.remove('active');
+        }
+
+        sendBtn.addEventListener('click', async () => {
+            const to = document.getElementById('to').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const body = document.getElementById('body').value.trim();
+            if (!to || !subject || !body) {
+                status.textContent = 'All fields required';
+                status.style.color = 'var(--danger-red)';
+                return;
+            }
+            status.textContent = 'Sending...';
+            status.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/dashboard/send-email/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ to, subject, body })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    status.textContent = 'Email sent!';
+                    status.style.color = 'var(--success-green)';
+                    setTimeout(() => location.reload(), 700);
+                } else {
+                    status.textContent = data.message || 'Failed';
+                    status.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                status.textContent = 'Error sending email';
+                status.style.color = 'var(--danger-red)';
+            }
+        });
+
+        saveBtn.addEventListener('click', () => {
+            const draft = {
+                to: document.getElementById('to').value,
+                subject: document.getElementById('subject').value,
+                body: document.getElementById('body').value,
+                action: 'save'
+            };
+            fetch('/email-page/save-draft/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(draft)
+            })
+            .then(r => r.json())
+            .then(d => {
+                if (d.status === 'ok') {
+                    status.textContent = 'Draft saved';
+                    status.style.color = 'var(--success-green)';
+                    renderDrafts(d.drafts || []);
+                } else {
+                    status.textContent = 'Failed to save draft';
+                    status.style.color = 'var(--danger-red)';
+                }
+            });
+        });
+
+        function renderDrafts(list) {
+            const container = document.getElementById('draftsList');
+            if (!container) return;
+            if (!list || list.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:12px;">No saved drafts.</div>';
+                return;
+            }
+            let html = '';
+            list.forEach((d, i) => {
+                html += `
+                    <div class="mail-card" style="cursor: default;">
+                        <div style="font-weight: 600; font-size: 12px; color: var(--text-primary);">${escapeHtml(d.subject)}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">To: ${escapeHtml(d.to)}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(d.body || '').slice(0, 60)}</div>
+                        <div style="margin-top: 6px; display: flex; gap: 6px;">
+                            <button class="btn btn-ghost btn-sm loadDraftBtn" data-idx="${i}">Load</button>
+                            <button class="btn btn-danger btn-sm delDraftBtn" data-idx="${i}">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.classList.contains('loadDraftBtn')) {
+                const idx = e.target.getAttribute('data-idx');
+                fetch('/email-page/save-draft/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'load', index: idx })
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.status === 'ok' && d.draft) {
+                        document.getElementById('to').value = d.draft.to || '';
+                        document.getElementById('subject').value = d.draft.subject || '';
+                        document.getElementById('body').value = d.draft.body || '';
+                        status.textContent = 'Draft loaded';
+                        status.style.color = 'var(--success-green)';
+                    } else {
+                        alert(d.message || 'Unable to load draft');
+                    }
+                });
+            }
+            if (e.target.classList.contains('delDraftBtn')) {
+                const idx = e.target.getAttribute('data-idx');
+                fetch('/email-page/save-draft/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'delete', index: idx })
+                })
+                .then(r => r.json())
+                .then(d => {
+                    if (d.status === 'ok') {
+                        renderDrafts(d.drafts || []);
+                    } else {
+                        alert('Delete failed');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,291 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Inventory Management</span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn btn-primary btn-sm" id="addAssetBtn">+ Register New Asset</button>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Asset Stat Cards -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Assets</div>
+                    <div class="stat-value" style="color: var(--primary-accent);">156</div>
+                    <div class="stat-delta delta-up">● In enterprise registry</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Assigned Assets</div>
+                    <div class="stat-value" style="color: var(--success-green);">142</div>
+                    <div class="stat-delta delta-up">● Currently deployed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Under Maintenance</div>
+                    <div class="stat-value" style="color: var(--danger-red);">4</div>
+                    <div class="stat-delta delta-down">● In service center</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">In Warehouse Stock</div>
+                    <div class="stat-value" style="color: var(--warning-amber);">10</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● Ready for allocation</div>
+                </div>
+            </div>
+
+            <!-- Asset List Table -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Enterprise Hardware & Equipment Roster</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Serial Number</th>
+                                <th>Category</th>
+                                <th>Allotted To</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight:600; color:var(--text-primary);">MacBook Pro 16" (M3 Max)</td>
+                                <td style="font-family: monospace; color: var(--text-secondary);">AAPL-9823-X1</td>
+                                <td>Computing</td>
+                                <td>John Doe</td>
+                                <td><span class="badge badge-green">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600; color:var(--text-primary);">Dell UltraSharp 32" 4K Monitor</td>
+                                <td style="font-family: monospace; color: var(--text-secondary);">DELL-CN-0982</td>
+                                <td>Display</td>
+                                <td>Alice Smith</td>
+                                <td><span class="badge badge-green">Active</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600; color:var(--text-primary);">Herman Miller Aeron Chair</td>
+                                <td style="font-family: monospace; color: var(--text-secondary);">HM-OFF-122</td>
+                                <td>Furniture</td>
+                                <td>-</td>
+                                <td><span class="badge badge-blue">In Stock</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:600; color:var(--text-primary);">iPad Pro 12.9" M2</td>
+                                <td style="font-family: monospace; color: var(--text-secondary);">AAPL-IPAD-331</td>
+                                <td>Mobile</td>
+                                <td>Emma Miller</td>
+                                <td><span class="badge badge-red">Under Repair</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Supply Levels Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Consumables & Office Supplies</span>
+                </div>
+                <div class="panel-body">
+                    <div class="grid-2">
+                        <div style="background:#FAFBFD; padding:14px; border-radius:8px; border:1px solid var(--border-subtle);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 500;">
+                                <span>Notebooks & Stationery</span>
+                                <span style="color: var(--danger-red); font-weight: 600;">25% remaining (Low)</span>
+                            </div>
+                            <div style="height: 6px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 25%; height: 100%; background: var(--danger-red);"></div>
+                            </div>
+                        </div>
+
+                        <div style="background:#FAFBFD; padding:14px; border-radius:8px; border:1px solid var(--border-subtle);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px; font-weight: 500;">
+                                <span>Pantry Coffee & Refreshments</span>
+                                <span style="color: var(--success-green); font-weight: 600;">80% remaining</span>
+                            </div>
+                            <div style="height: 6px; background: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                                <div style="width: 80%; height: 100%; background: var(--success-green);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Adding Asset -->
+    <div id="assetModal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Register New Enterprise Asset</span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeAssetModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="form-group">
+                        <label>Asset Model / Name *</label>
+                        <input type="text" id="assetName" placeholder="e.g. MacBook Pro 16">
+                    </div>
+                    <div class="form-group">
+                        <label>Serial Number / Asset Tag *</label>
+                        <input type="text" id="assetSerial" placeholder="e.g. AAPL-8839">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Hardware Category</label>
+                            <select id="assetCategory">
+                                <option value="Computing">Computing</option>
+                                <option value="Display">Display / Monitors</option>
+                                <option value="Mobile">Mobile / Tablets</option>
+                                <option value="Furniture">Furniture</option>
+                                <option value="Other">Other Equipment</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Operational Status</label>
+                            <select id="assetStatus">
+                                <option value="Active">Active</option>
+                                <option value="In Stock">In Stock</option>
+                                <option value="Repair">Under Repair</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Assigned Custodian (Name or Email)</label>
+                        <input type="text" id="allottedTo" placeholder="e.g. alex@company.com">
+                    </div>
+                </div>
+                <div id="assetMsg" style="margin-top: 10px; text-align: center; font-size: 12px; min-height: 14px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeAssetModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAssetBtn">Save Asset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const assetModal = document.getElementById('assetModal');
+        const assetMsg = document.getElementById('assetMsg');
+
+        document.getElementById('addAssetBtn').onclick = () => {
+            assetModal.classList.add('active');
+            assetMsg.textContent = '';
+        };
+
+        function closeAssetModal() {
+            assetModal.classList.remove('active');
+        }
+
+        document.getElementById('confirmAssetBtn').onclick = async () => {
+            const name = document.getElementById('assetName').value.trim();
+            const serial = document.getElementById('assetSerial').value.trim();
+            const category = document.getElementById('assetCategory').value;
+            const allotted = document.getElementById('allottedTo').value.trim();
+            const status = document.getElementById('assetStatus').value;
+
+            if (!name || !serial) return alert('Name and Serial Number are required');
+
+            assetMsg.textContent = 'Registering asset...';
+            assetMsg.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/api/inventory/add-asset/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, serial, category, allotted, status })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    assetMsg.textContent = 'Asset registered successfully!';
+                    assetMsg.style.color = 'var(--success-green)';
+                    setTimeout(() => {
+                        closeAssetModal();
+                        location.reload();
+                    }, 1000);
+                } else {
+                    assetMsg.textContent = data.message || 'Error saving asset';
+                    assetMsg.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                assetMsg.textContent = 'Connection error';
+                assetMsg.style.color = 'var(--danger-red)';
+            }
+        };
+    </script>
+</body>
+
+</html>

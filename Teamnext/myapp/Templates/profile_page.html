@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personnel Profile - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Personnel Profile</span>
+            </div>
+            <div class="topbar-right">
+                <a href="/dashboard/" class="btn btn-ghost btn-sm">← Back to Dashboard</a>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <div class="panel" style="max-width: 680px;">
+                <div class="panel-header">
+                    <span class="panel-title">Employee Identification Card</span>
+                </div>
+                <div class="panel-body">
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
+                        <div style="width: 56px; height: 56px; border-radius: 50%; background: #2D4170; color: #7BA7F7; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700;">
+                            {{ email|slice:":1"|upper }}
+                        </div>
+                        <div>
+                            <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);">{{ user.name|default:email }}</div>
+                            <div style="margin-top: 4px;">
+                                <span class="badge badge-blue">{{ user.role|default:"Enterprise Member" }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
+                        <div>
+                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Verified Email Address</label>
+                            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">{{ email }}</div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Organization Tenant</label>
+                            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">{{ user.company_name|default:company_name }}</div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">System Permissions</label>
+                            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">
+                                {% if is_company_admin %}Tenant Administrator (Full Access){% else %}Standard Member{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

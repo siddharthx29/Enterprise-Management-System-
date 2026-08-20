@@ -1,0 +1,329 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departments & Projects - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .dept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .dept-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .dept-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: #CBD5E1;
+        }
+
+        .dept-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .dept-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .proj-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .proj-item {
+            background: #FAFBFD;
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .multi-select {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .multi-item {
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #FAFBFD;
+            border: 1px solid var(--border-color);
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .multi-item.selected {
+            background: var(--info-bg);
+            border-color: var(--primary-accent);
+            color: var(--primary-accent);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Departments & Projects</span>
+            </div>
+            <div class="topbar-right">
+                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
+            </div>
+        </div>
+
+        <main class="content-area">
+            {% if is_admin %}
+            <!-- Admin Controls -->
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Create Department</span>
+                    </div>
+                    <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
+                        <input id="newDeptName" placeholder="Department Name (e.g. Engineering, Sales)">
+                        <textarea id="newDeptDesc" placeholder="Department charter / summary" rows="2"></textarea>
+                        <button class="btn btn-primary" onclick="createDepartment()">Add Department</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Launch Project</span>
+                    </div>
+                    <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
+                        <input id="newProjName" placeholder="Project Name">
+                        <textarea id="newProjDesc" placeholder="Project milestones & objectives" rows="2"></textarea>
+                        <div>
+                            <label style="font-size: 11px; margin-bottom: 4px;">Assign to Departments:</label>
+                            <div id="deptPicker" class="multi-select"></div>
+                        </div>
+                        <button class="btn btn-primary" onclick="createProject()">Launch Project</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Structure Grid -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Organizational Structure & Active Projects</span>
+                </div>
+                <div class="panel-body">
+                    <div id="contentGrid" class="dept-grid">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <div id="unassignedProjects" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--border-color);">
+                        <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Standalone / Direct Projects</div>
+                        <ul id="unassignedList" class="proj-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;"></ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let departments = [];
+        let projects = [];
+
+        async function loadData() {
+            try {
+                const [dRes, pRes] = await Promise.all([
+                    fetch('/api/departments/'),
+                    fetch('/api/projects/')
+                ]);
+                const [dData, pData] = await Promise.all([dRes.json(), pRes.json()]);
+
+                if (dData.status === 'ok') departments = dData.departments;
+                if (pData.status === 'ok') projects = pData.projects;
+
+                renderInterface();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderInterface() {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '';
+
+            const picker = document.getElementById('deptPicker');
+            if (picker) {
+                picker.innerHTML = departments.map(d => `<div class="multi-item" data-id="${d.id}" onclick="this.classList.toggle('selected')">${d.name}</div>`).join('');
+            }
+
+            if (departments.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 32px; color: var(--text-muted); font-size: 12px;">No departments registered yet.</div>';
+                return;
+            }
+
+            departments.forEach(dept => {
+                const deptProjects = projects.filter(p => p.departments.some(pd => pd.id === dept.id));
+                const card = document.createElement('div');
+                card.className = 'dept-card';
+                card.innerHTML = `
+                    <div class="dept-header">
+                        <span class="dept-name">${dept.name}</span>
+                        <span class="badge badge-gray">${deptProjects.length} Projects</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">${dept.desc || 'No description provided.'}</div>
+                    <ul class="proj-list">
+                        ${deptProjects.length > 0 ? deptProjects.map(p => `
+                            <li class="proj-item">
+                                <span style="font-weight: 500; color: var(--text-primary);">${p.name}</span>
+                                <span class="badge badge-blue">Active</span>
+                            </li>
+                        `).join('') : '<li style="font-size: 11px; color: var(--text-muted); font-style: italic;">No active projects</li>'}
+                    </ul>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Unassigned
+            const unassigned = projects.filter(p => !p.departments || p.departments.length === 0);
+            const unSection = document.getElementById('unassignedProjects');
+            const unList = document.getElementById('unassignedList');
+            if (unassigned.length > 0) {
+                unSection.style.display = 'block';
+                unList.innerHTML = unassigned.map(p => `
+                    <li class="proj-item">
+                        <span style="font-weight: 500; color: var(--text-primary);">${p.name}</span>
+                        <span class="badge badge-amber">Direct</span>
+                    </li>
+                `).join('');
+            } else {
+                unSection.style.display = 'none';
+            }
+        }
+
+        async function createDepartment() {
+            const name = document.getElementById('newDeptName').value.trim();
+            const desc = document.getElementById('newDeptDesc').value.trim();
+            if (!name) return alert('Department name required');
+
+            const res = await fetch('/api/departments/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, desc })
+            });
+            if ((await res.json()).status === 'ok') {
+                document.getElementById('newDeptName').value = '';
+                document.getElementById('newDeptDesc').value = '';
+                loadData();
+            }
+        }
+
+        async function createProject() {
+            const name = document.getElementById('newProjName').value.trim();
+            const desc = document.getElementById('newProjDesc').value.trim();
+            const deptIds = Array.from(document.querySelectorAll('#deptPicker .multi-item.selected')).map(el => el.dataset.id);
+
+            if (!name) return alert('Project name required');
+
+            const res = await fetch('/api/projects/add/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, desc, departments: deptIds })
+            });
+            if ((await res.json()).status === 'ok') {
+                document.getElementById('newProjName').value = '';
+                document.getElementById('newProjDesc').value = '';
+                loadData();
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+
+</html>

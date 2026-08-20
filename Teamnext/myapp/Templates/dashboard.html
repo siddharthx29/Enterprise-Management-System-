@@ -1,0 +1,501 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamNext - Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .dept-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+            margin-bottom: 4px;
+        }
+
+        .dept-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .dept-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .proj-pill {
+            display: inline-block;
+            padding: 3px 8px;
+            background: var(--info-bg);
+            color: var(--info-blue);
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            border: 1px solid #D6E4FC;
+        }
+
+        .collab-hub {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 16px;
+        }
+
+        .chat-container {
+            height: 380px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #FAFBFD;
+        }
+
+        .chat-msg-card {
+            background: #FFFFFF;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+            background: #FFFFFF;
+        }
+
+        .social-pulse {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        .social-item {
+            background: #FAFBFD;
+            border: 1px solid var(--border-subtle);
+            padding: 10px 12px;
+            border-radius: 7px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Command Center</span>
+            </div>
+            <div class="topbar-right">
+                <div style="text-align: right; margin-right: 8px;">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-primary);">{{ company_name }}</div>
+                    <div style="font-size: 10px; color: var(--text-muted);">{{ email }}</div>
+                </div>
+                <a href="/profile-page/" class="btn btn-ghost btn-sm">Profile</a>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Stat Cards Grid -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Active Tickets</div>
+                    <div class="stat-value" style="color: var(--primary-accent);">{{ tickets_count }}</div>
+                    <div class="stat-delta delta-up">● Open items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Critical Priority</div>
+                    <div class="stat-value" style="color: var(--danger-red);">{{ analytics.high }}</div>
+                    <div class="stat-delta delta-down">● Action required</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Medium / Low</div>
+                    <div class="stat-value" style="color: var(--warning-amber);">{{ analytics.medium|add:analytics.low }}</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● In progress</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Productivity Rating</div>
+                    <div class="stat-value" style="color: var(--success-green);">92%</div>
+                    <div class="stat-delta delta-up">↑ 4.2% this month</div>
+                </div>
+            </div>
+
+            <!-- Organizational Structure -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Organizational Structure</span>
+                    <a href="/projects-page/" class="btn btn-ghost btn-sm">Manage Departments</a>
+                </div>
+                <div class="panel-body">
+                    <div class="dept-grid">
+                        {% for item in departments %}
+                        <div class="dept-card">
+                            <div class="dept-header">
+                                <span>{{ item.dept.name }}</span>
+                                <span class="badge badge-gray">{{ item.projects.count }} Proj</span>
+                            </div>
+                            <div>
+                                {% for p in item.projects %}
+                                <span class="proj-pill">{{ p.name }}</span>
+                                {% empty %}
+                                <div style="font-size: 12px; color: var(--text-muted);">No active projects</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--text-muted);">
+                            No departments configured yet. <a href="/projects-page/" style="color: var(--primary-accent);">Create Department</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaboration Hub -->
+            <div class="collab-hub">
+                <!-- Live Project Chat -->
+                <div class="panel chat-container">
+                    <div class="panel-header">
+                        <span class="panel-title">Collaboration Channel</span>
+                        <select id="projectSelect" class="compact-input">
+                            {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div id="chatArea" class="chat-messages">
+                        <!-- Messages dynamically populated by JavaScript -->
+                    </div>
+                    <div class="chat-input-area">
+                        <input id="chatInput" placeholder="Type a message to the channel...">
+                        <button id="sendChatBtn" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Quick Actions</span>
+                    </div>
+                    <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
+                        <input id="emailTo" placeholder="Recipient email address">
+                        <input id="emailSubject" placeholder="Email subject">
+                        <textarea id="emailBody" placeholder="Message content..." style="min-height: 70px;"></textarea>
+                        <div class="form-row">
+                            <button id="sendEmailBtn" class="btn btn-primary">Send Memo</button>
+                            <button id="saveDraftBtn" class="btn btn-ghost">Save Draft</button>
+                        </div>
+
+                        <div style="height: 1px; background: var(--border-subtle); margin: 4px 0;"></div>
+
+                        <input id="ticketTitle" placeholder="Ticket summary">
+                        <select id="ticketPriority" class="compact-input" style="width: 100%;">
+                            <option value="medium">🟡 Medium Priority</option>
+                            <option value="high">🔴 High Priority</option>
+                            <option value="low">🟢 Low Priority</option>
+                        </select>
+                        <button id="createTicketBtn" class="btn btn-ghost" style="color: var(--danger-red); border-color: #FECACA;">
+                            🎫 Raise Ticket
+                        </button>
+                        <div id="actionStatus" style="font-size: 11px; text-align: center; min-height: 14px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Pulse -->
+            <div class="social-pulse">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title" style="color: var(--warning-amber);">Upcoming Events</span>
+                    </div>
+                    <div class="panel-body">
+                        {% for b in birthdays %}
+                        <div class="social-item">{{ b.title }} - {{ b.meta_info }}</div>
+                        {% empty %}
+                        <div style="font-size: 12px; color: var(--text-muted);">No events scheduled</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title" style="color: #9333EA;">Hot Topics</span>
+                    </div>
+                    <div class="panel-body">
+                        {% for t in hot_topics %}
+                        <div class="social-item">{{ t.title }} ({{ t.meta_info }})</div>
+                        {% empty %}
+                        <div style="font-size: 12px; color: var(--text-muted);">No active topics</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title" style="color: var(--info-blue);">Daily Dares</span>
+                    </div>
+                    <div class="panel-body">
+                        {% for d in dares %}
+                        <div class="social-item">{{ d.title }} - {{ d.content }}</div>
+                        {% empty %}
+                        <div style="font-size: 12px; color: var(--text-muted);">No challenges posted</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const projectSelect = document.getElementById('projectSelect');
+        const chatArea = document.getElementById('chatArea');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function loadMessages() {
+            if (!projectSelect) return;
+            const pId = projectSelect.value;
+            if (!pId) return;
+            try {
+                const res = await fetch(`/api/chat/messages/?project=${encodeURIComponent(pId)}`);
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    chatArea.innerHTML = data.messages.map(m => `
+                        <div class="chat-msg-card">
+                            <div style="font-size: 11px; color: var(--primary-accent); font-weight: 600;">${escapeHtml(m.user)}</div>
+                            <div style="font-size: 12px; color: var(--text-primary); margin-top: 2px;">${escapeHtml(m.text)}</div>
+                        </div>
+                    `).join('');
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+            } catch (e) { }
+        }
+
+        if (sendChatBtn) {
+            sendChatBtn.onclick = async () => {
+                const text = chatInput.value.trim();
+                const pId = projectSelect.value;
+                if (!text || !pId) return;
+                try {
+                    const res = await fetch('/api/chat/messages/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ project: pId, text: text })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'ok') {
+                        chatInput.value = '';
+                        loadMessages();
+                    } else {
+                        alert(data.message || 'Error sending message');
+                    }
+                } catch (e) {
+                    alert('Connection error. Please try again.');
+                }
+            };
+        }
+
+        if (chatInput) {
+            chatInput.onkeypress = async (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    sendChatBtn.click();
+                }
+            };
+        }
+
+        if (projectSelect) {
+            projectSelect.onchange = loadMessages;
+            setInterval(loadMessages, 5000);
+            loadMessages();
+        }
+
+        // Email Quick Actions
+        const emailTo = document.getElementById('emailTo');
+        const emailSubject = document.getElementById('emailSubject');
+        const emailBody = document.getElementById('emailBody');
+        const sendEmailBtn = document.getElementById('sendEmailBtn');
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        const actionStatus = document.getElementById('actionStatus');
+
+        if (sendEmailBtn) {
+            sendEmailBtn.onclick = async () => {
+                const to = emailTo.value.trim();
+                const subject = emailSubject.value.trim();
+                const body = emailBody.value.trim();
+                if (!to || !subject || !body) {
+                    actionStatus.textContent = 'All email fields required';
+                    actionStatus.style.color = 'var(--danger-red)';
+                    return;
+                }
+                actionStatus.textContent = 'Sending...';
+                actionStatus.style.color = 'var(--text-muted)';
+                try {
+                    const res = await fetch('/dashboard/send-email/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ to, subject, body })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        actionStatus.textContent = 'Email sent!';
+                        actionStatus.style.color = 'var(--success-green)';
+                        emailTo.value = ''; emailSubject.value = ''; emailBody.value = '';
+                    } else {
+                        actionStatus.textContent = data.message || 'Failed to send';
+                        actionStatus.style.color = 'var(--danger-red)';
+                    }
+                } catch (e) {
+                    actionStatus.textContent = 'Error sending email';
+                    actionStatus.style.color = 'var(--danger-red)';
+                }
+            };
+        }
+
+        if (saveDraftBtn) {
+            saveDraftBtn.onclick = async () => {
+                const draft = { to: emailTo.value, subject: emailSubject.value, body: emailBody.value, action: 'save' };
+                try {
+                    const res = await fetch('/email-page/save-draft/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(draft)
+                    });
+                    if ((await res.json()).status === 'ok') {
+                        actionStatus.textContent = 'Draft saved';
+                        actionStatus.style.color = 'var(--success-green)';
+                    }
+                } catch (e) { }
+            };
+        }
+
+        // Ticket Quick Actions
+        const createTicketBtn = document.getElementById('createTicketBtn');
+        const ticketTitle = document.getElementById('ticketTitle');
+        const ticketPriority = document.getElementById('ticketPriority');
+
+        if (createTicketBtn) {
+            createTicketBtn.onclick = async () => {
+                const title = ticketTitle.value.trim();
+                const priority = ticketPriority ? ticketPriority.value : 'medium';
+                const pId = projectSelect ? projectSelect.value : null;
+                if (!title) {
+                    actionStatus.textContent = 'Please enter a ticket title';
+                    actionStatus.style.color = 'var(--danger-red)';
+                    return;
+                }
+                actionStatus.textContent = 'Creating ticket...';
+                actionStatus.style.color = 'var(--text-muted)';
+                try {
+                    const res = await fetch('/dashboard/create-ticket/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, priority, project_id: pId, description: 'Created from dashboard quick actions' })
+                    });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        actionStatus.textContent = '✅ ' + (data.message || 'Ticket raised!');
+                        actionStatus.style.color = 'var(--success-green)';
+                        ticketTitle.value = '';
+                    } else {
+                        actionStatus.textContent = '❌ ' + (data.message || 'Failed to raise ticket');
+                        actionStatus.style.color = 'var(--danger-red)';
+                    }
+                } catch (e) {
+                    actionStatus.textContent = '❌ Connection error. Please try again.';
+                    actionStatus.style.color = 'var(--danger-red)';
+                }
+            };
+        }
+    </script>
+</body>
+
+</html>

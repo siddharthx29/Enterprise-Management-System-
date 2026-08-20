@@ -1,0 +1,397 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeamNext - Social Hub</title>
+    <link rel="icon" type="image/svg+xml" href="/static/myapp/images/logo.svg">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #111827 60%, #0b1220 100%);
+            color: #e6eef8;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #f6ad55, #f687b3, #63b3ed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .back-btn:hover {
+            color: #fff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .column {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: calc(100vh - 120px);
+        }
+
+        .col-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .col-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .content-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .item {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .item:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .item-title {
+            font-weight: 600;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .item-sub {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+
+        .add-panel {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .add-panel input,
+        .add-panel select {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: brightness 1.1;
+        }
+
+
+        .col-birthdays {
+            border-color: #f6ad55;
+        }
+
+        .col-birthdays .item {
+            border-left-color: #f6ad55;
+        }
+
+        .col-birthdays .add-btn {
+            background: #f6ad55;
+            color: #1a202c;
+        }
+
+        .col-topics {
+            border-color: #f687b3;
+        }
+
+        .col-topics .item {
+            border-left-color: #f687b3;
+        }
+
+        .col-topics .add-btn {
+            background: #f687b3;
+            color: #1a202c;
+        }
+
+        .col-dares {
+            border-color: #63b3ed;
+        }
+
+        .col-dares .item {
+            border-left-color: #63b3ed;
+        }
+
+        .col-dares .add-btn {
+            background: #63b3ed;
+            color: #1a202c;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .column {
+                height: auto;
+                max-height: 500px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <a href="/dashboard/" style="text-decoration: none;">
+                    <img src="{% static 'myapp/images/logo.svg' %}" alt="TeamNext ERP"
+                        style="height:50px; width:auto; vertical-align: middle;">
+                </a>
+                <h1 style="margin: 0;">Social Hub</h1>
+            </div>
+            <a href="/dashboard/" class="back-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12" />
+                    <polyline points="12 19 5 12 12 5" />
+                </svg>
+                Back to Dashboard</a>
+        </div>
+
+        <div class="grid">
+
+            <div class="column col-birthdays">
+                <div class="col-header">
+                    <h2 style="color:#f6ad55; display: flex; align-items: center; gap: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
+                            <path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1" />
+                            <path d="M2 21h20" />
+                            <path d="M7 8v3" />
+                            <path d="M12 8v3" />
+                            <path d="M17 8v3" />
+                            <path d="M7 4h.01" />
+                            <path d="M12 4h.01" />
+                            <path d="M17 4h.01" />
+                        </svg>
+                        Birthdays
+                    </h2>
+                    <span style="font-size:12px;opacity:0.6">{{ birthdays|length }} items</span>
+                </div>
+                <div class="content-list" id="list-birthday">
+                    {% for b in birthdays %}
+                    <div class="item">
+                        <div class="item-row"><span class="item-title">{{ b.name }}</span> <span
+                                style="font-size:13px;color:#f6ad55">{{ b.date }}</span></div>
+                        <div class="item-sub">{{ b.role }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="add-panel">
+                    <input type="text" id="bd-name" placeholder="Name (e.g. John Doe)">
+                    <input type="text" id="bd-date" placeholder="Date (e.g. Feb 04)">
+                    <input type="text" id="bd-role" placeholder="Role (e.g. Designer)">
+                    <button class="add-btn" onclick="addItem('birthday')">Add Birthday</button>
+                </div>
+            </div>
+
+
+            <div class="column col-topics">
+                <div class="col-header">
+                    <h2 style="color:#f687b3; display: flex; align-items: center; gap: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                        </svg>
+                        Hot Topics
+                    </h2>
+                    <span style="font-size:12px;opacity:0.6">{{ hot_topics|length }} items</span>
+                </div>
+                <div class="content-list" id="list-topic">
+                    {% for t in hot_topics %}
+                    <div class="item">
+                        <div class="item-row"><span class="item-title">{{ t.title }}</span></div>
+                        <div class="item-sub">By {{ t.author }} • {{ t.views }} views</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="add-panel">
+                    <input type="text" id="topic-title" placeholder="Topic Title">
+                    <input type="text" id="topic-author" placeholder="Author/Department">
+                    <button class="add-btn" onclick="addItem('topic')">Add Topic</button>
+                </div>
+            </div>
+
+
+            <div class="column col-dares">
+                <div class="col-header">
+                    <h2 style="color:#63b3ed; display: flex; align-items: center; gap: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <circle cx="15.5" cy="8.5" r="1.5" />
+                            <circle cx="15.5" cy="15.5" r="1.5" />
+                            <circle cx="8.5" cy="15.5" r="1.5" />
+                        </svg>
+                        Daily Dares
+                    </h2>
+                    <span style="font-size:12px;opacity:0.6">{{ dares|length }} items</span>
+                </div>
+                <div class="content-list" id="list-dare">
+                    {% for d in dares %}
+                    <div class="item">
+                        <div class="item-row"><span class="item-title">"{{ d.task }}"</span></div>
+                        <div class="item-sub">From: {{ d.from }} → To: {{ d.to }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="add-panel">
+                    <input type="text" id="dare-task" placeholder="The Task/Dare">
+                    <input type="text" id="dare-from" placeholder="From (Challenger)">
+                    <input type="text" id="dare-to" placeholder="To (Target)">
+                    <button class="add-btn" onclick="addItem('dare')">Add Dare</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function addItem(type) {
+            let payload = { type: type };
+
+            if (type === 'birthday') {
+                const name = document.getElementById('bd-name').value.trim();
+                const date = document.getElementById('bd-date').value.trim();
+                const role = document.getElementById('bd-role').value.trim();
+                if (!name || !date) return alert('Name and Date are required');
+                payload = { ...payload, name, date, role };
+            } else if (type === 'topic') {
+                const title = document.getElementById('topic-title').value.trim();
+                const author = document.getElementById('topic-author').value.trim();
+                if (!title) return alert('Title is required');
+                payload = { ...payload, title, author: author || 'Anonymous' };
+            } else if (type === 'dare') {
+                const task = document.getElementById('dare-task').value.trim();
+                const from = document.getElementById('dare-from').value.trim();
+                const to = document.getElementById('dare-to').value.trim();
+                if (!task) return alert('Task is required');
+                payload = { ...payload, task, from: from || 'Mystery', to: to || 'All' };
+            }
+
+            try {
+                const res = await fetch('/api/social/add/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+
+                    window.location.reload();
+                } else {
+                    alert('Failed: ' + data.message);
+                }
+            } catch (e) {
+                alert('Error adding item');
+            }
+        }
+    </script>
+    <script src="/static/myapp/js/responsive.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,358 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickets - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .ticket-card {
+            background: #FAFBFD;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .ticket-card:hover {
+            background: #F0F2F7;
+            border-color: var(--border-color);
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Support & Issue Tickets</span>
+            </div>
+            <div class="topbar-right">
+                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Analytics Stat Cards -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Critical / High Priority</div>
+                    <div class="stat-value" style="color: var(--danger-red);">{{ analytics.high }}</div>
+                    <div class="stat-delta delta-down">● Urgent response needed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Medium Priority</div>
+                    <div class="stat-value" style="color: var(--warning-amber);">{{ analytics.medium }}</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● In engineering queue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Low Priority</div>
+                    <div class="stat-value" style="color: var(--info-blue);">{{ analytics.low }}</div>
+                    <div class="stat-delta delta-up">● Standard maintenance</div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="grid-template-columns: 360px 1fr;">
+                <!-- Left: Create Ticket & Add Developer -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Create Ticket Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Raise New Ticket</span>
+                        </div>
+                        <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div class="form-row">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Project</label>
+                                    <select id="projSel">
+                                        {% for p in projects %}
+                                        <option value="{{ p.id }}">{{ p.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label>Priority</label>
+                                    <select id="prioritySel">
+                                        <option value="high">High</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Ticket Title</label>
+                                <input id="tTitle" placeholder="Short descriptive summary">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Description</label>
+                                <textarea id="tDesc" rows="4" placeholder="Steps to reproduce, error details..."></textarea>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Assign to Team Member</label>
+                                <select id="assigneeSel">
+                                    <option value="">-- Unassigned --</option>
+                                    {% for dev in developers %}
+                                    <option value="{{ dev.email }}">{{ dev.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <button id="createBtn" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Create Ticket</button>
+                            <div id="status" style="font-size: 11px; text-align: center; min-height: 14px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Add Developer Panel -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Developer Quick Onboarding (OTP)</span>
+                        </div>
+                        <div class="panel-body" style="display: flex; flex-direction: column; gap: 8px;">
+                            <input id="devName" placeholder="Developer Full Name">
+                            <input id="devEmail" placeholder="Developer Email Address">
+                            <div class="form-row">
+                                <button id="reqOtpBtn" class="btn btn-ghost btn-sm" style="flex: 1;">Request OTP</button>
+                                <button id="verifyOtpBtn" class="btn btn-primary btn-sm" style="flex: 1;">Verify & Add</button>
+                            </div>
+                            <input id="devOtp" placeholder="Enter OTP code to verify" maxlength="6">
+                            <div id="devStatus" style="font-size: 11px; text-align: center; min-height: 14px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Recent Tickets Roster -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Ticket Registry</span>
+                    </div>
+                    <div class="panel-body" style="max-height: calc(100vh - 240px); overflow-y: auto;">
+                        {% if recent %}
+                        {% for t in recent %}
+                        <div class="ticket-card" style="border-left: 3px solid {% if t.priority == 'high' %}var(--danger-red){% elif t.priority == 'medium' %}var(--warning-amber){% else %}var(--info-blue){% endif %};">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                                <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">{{ t.title }}</span>
+                                <span class="badge {% if t.priority == 'high' %}badge-red{% elif t.priority == 'medium' %}badge-amber{% else %}badge-blue{% endif %}">
+                                    {{ t.priority|upper }}
+                                </span>
+                            </div>
+
+                            <div class="grid-2" style="margin-bottom: 6px; font-size: 11px; color: var(--text-muted);">
+                                <div>Project: <strong style="color: var(--text-primary);">{{ t.project.name }}</strong></div>
+                                <div>Assignee: <strong style="color: {% if t.employee %}var(--success-green){% else %}var(--warning-amber){% endif %};">{{ t.employee.name|default:"Unassigned" }}</strong></div>
+                            </div>
+
+                            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; border-top: 1px solid var(--border-subtle); padding-top: 6px; margin-top: 6px;">
+                                {{ t.description|truncatewords:28 }}
+                            </div>
+
+                            <div style="font-size: 10px; color: var(--text-muted); margin-top: 6px;">
+                                Logged: {{ t.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 12px;">
+                            No tickets currently raised. Use the left form to create a new ticket.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function refreshDevelopers() {
+            try {
+                const res = await fetch('/api/developers/');
+                const data = await res.json();
+                if (data.status === 'ok' && data.developers.length > 0) {
+                    const sel = document.getElementById('assigneeSel');
+                    if (!sel) return;
+
+                    const selectedValue = sel.value;
+                    sel.innerHTML = '<option value="">-- Unassigned --</option>';
+
+                    data.developers.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.email;
+                        opt.textContent = d.name;
+                        sel.appendChild(opt);
+                    });
+
+                    if (selectedValue) sel.value = selectedValue;
+                }
+            } catch (e) {
+                console.error('Error loading employees:', e);
+            }
+        }
+
+        document.getElementById('createBtn').addEventListener('click', async function () {
+            const title = document.getElementById('tTitle').value.trim();
+            const desc = document.getElementById('tDesc').value.trim();
+            const proj = document.getElementById('projSel').value;
+            const priority = document.getElementById('prioritySel').value;
+            const assignee = document.getElementById('assigneeSel').value;
+            const status = document.getElementById('status');
+
+            if (!title || !desc) {
+                status.textContent = 'Title and description required';
+                status.style.color = 'var(--danger-red)';
+                return;
+            }
+            status.textContent = 'Creating ticket...';
+            status.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/dashboard/create-ticket/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description: desc, project_id: proj, priority, assignee })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    status.textContent = 'Ticket created successfully!';
+                    status.style.color = 'var(--success-green)';
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    status.textContent = data.message || 'Failed';
+                    status.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                status.textContent = 'Error creating ticket';
+                status.style.color = 'var(--danger-red)';
+            }
+        });
+
+        document.getElementById('reqOtpBtn').addEventListener('click', async function () {
+            const name = document.getElementById('devName').value.trim();
+            const email = document.getElementById('devEmail').value.trim();
+            const st = document.getElementById('devStatus');
+            if (!name || !email) {
+                st.textContent = 'Name and email required';
+                st.style.color = 'var(--danger-red)';
+                return;
+            }
+            st.textContent = 'Requesting OTP...';
+            st.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/api/add-developer/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    st.textContent = 'OTP sent to ' + email;
+                    st.style.color = 'var(--success-green)';
+                } else {
+                    st.textContent = data.message || 'Failed';
+                    st.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                st.textContent = 'Error';
+                st.style.color = 'var(--danger-red)';
+            }
+        });
+
+        document.getElementById('verifyOtpBtn').addEventListener('click', async function () {
+            const otp = document.getElementById('devOtp').value.trim();
+            const st = document.getElementById('devStatus');
+            if (!otp) {
+                st.textContent = 'Enter OTP code';
+                st.style.color = 'var(--danger-red)';
+                return;
+            }
+            st.textContent = 'Verifying...';
+            st.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/api/verify-developer/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    st.textContent = 'Developer added: ' + data.developer;
+                    st.style.color = 'var(--success-green)';
+                    await refreshDevelopers();
+                } else {
+                    st.textContent = data.message || 'Failed';
+                    st.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                st.textContent = 'Error verifying OTP';
+                st.style.color = 'var(--danger-red)';
+            }
+        });
+
+        refreshDevelopers();
+    </script>
+</body>
+
+</html>

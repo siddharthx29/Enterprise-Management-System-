@@ -1,0 +1,14 @@
+# Default standard gitignore for python projects targeting railway
+*.pyc
+__pycache__/
+venv/
+env/
+.env
+db.sqlite3
+staticfiles/
+
+Teamnext/.env
+
+Teamnext/Teamnext/.env
+
+**/.env

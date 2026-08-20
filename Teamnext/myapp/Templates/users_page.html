@@ -1,0 +1,347 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users & Access - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .user-item-card {
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            background: #FAFBFD;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .user-item-card:hover {
+            background: #F0F2F7;
+            border-color: var(--border-color);
+        }
+
+        .proj-badge {
+            display: inline-block;
+            background: var(--info-bg);
+            color: var(--info-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            margin-right: 4px;
+            margin-top: 4px;
+            border: 1px solid #D6E4FC;
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            <a href="/users-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Users & Access Control</span>
+            </div>
+            <div class="topbar-right">
+                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Invite User Section -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Invite New Team Member (OTP Verified)</span>
+                </div>
+                <div class="panel-body">
+                    <div class="form-row">
+                        <input id="inviteName" placeholder="Full Name">
+                        <input id="inviteEmail" placeholder="Work Email Address">
+                        <input id="inviteRole" placeholder="Role (e.g. Designer, Lead)">
+                        <button id="inviteBtn" class="btn btn-primary" style="flex: 0 0 140px;">Send Invite</button>
+                    </div>
+                    <div id="inviteStatus" style="font-size: 11px; margin-top: 8px; min-height: 14px;"></div>
+                </div>
+            </div>
+
+            <!-- Users Roster Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Active Personnel & Permissions</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label style="font-size: 11px; margin: 0;">Scope Project:</label>
+                        <select id="projectSelect" class="compact-input">
+                            {% for p in projects %}
+                            <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="userList" style="display: flex; flex-direction: column; gap: 6px;">
+                        <div style="text-align: center; padding: 24px; color: var(--text-muted);">Loading members...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/users/');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    const ul = document.getElementById('userList');
+                    ul.innerHTML = '';
+                    if (data.users.length === 0) {
+                        ul.innerHTML = '<div style="text-align:center; padding:24px; color:var(--text-muted);">No members registered yet.</div>';
+                        return;
+                    }
+                    data.users.forEach(u => {
+                        const div = document.createElement('div');
+                        div.className = 'user-item-card';
+                        const projectBadges = (u.projects || []).map(p => `<span class="proj-badge">${p}</span>`).join('');
+                        div.innerHTML = `
+                            <div>
+                                <div style="font-size:13px; font-weight:600; color:var(--text-primary);">${u.name || u.email}</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                                    ${u.role || 'Member'} • ${u.department || 'General'}
+                                </div>
+                                <div style="margin-top:4px;">${projectBadges || '<span style="font-size:10px; color:var(--text-muted);">No assigned projects</span>'}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">${u.email}</div>
+                                <button class="btn btn-ghost btn-sm editSettingsBtn" data-email="${u.email}" data-assigned='${JSON.stringify(u.projects || [])}'>
+                                    Manage Permissions
+                                </button>
+                            </div>
+                        `;
+                        ul.appendChild(div);
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.getElementById('inviteBtn').addEventListener('click', async function () {
+            const name = document.getElementById('inviteName').value.trim();
+            const email = (document.getElementById('inviteEmail').value || '').trim();
+            const role = document.getElementById('inviteRole').value.trim();
+            const st = document.getElementById('inviteStatus');
+
+            if (!name || !email) {
+                st.textContent = 'Name and email required';
+                st.style.color = 'var(--danger-red)';
+                return;
+            }
+            st.textContent = 'Requesting OTP invitation...';
+            st.style.color = 'var(--text-muted)';
+            try {
+                const res = await fetch('/api/add-developer/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    st.textContent = 'OTP invitation sent to ' + email;
+                    st.style.color = 'var(--success-green)';
+                    loadUsers();
+                } else {
+                    st.textContent = data.message || 'Failed';
+                    st.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                st.textContent = 'Error';
+                st.style.color = 'var(--danger-red)';
+            }
+        });
+
+        document.addEventListener('click', function (ev) {
+            if (!ev.target.classList.contains('editSettingsBtn')) return;
+            const email = ev.target.getAttribute('data-email');
+            const assignedProjects = JSON.parse(ev.target.getAttribute('data-assigned') || '[]');
+            const projectSelect = document.getElementById('projectSelect');
+            if (!projectSelect) return;
+            const currentProj = projectSelect.value;
+
+            fetch('/api/projects/' + encodeURIComponent(currentProj) + '/members/' + encodeURIComponent(email) + '/settings/')
+            .then(r => r.json())
+            .then(data => {
+                if (data.status !== 'ok') return alert(data.message || 'Unable to load permissions');
+                const s = data.settings;
+
+                const dlg = document.createElement('div');
+                dlg.className = 'modal-backdrop active';
+                dlg.style.display = 'flex';
+
+                let projHtml = '<div style="margin-bottom:8px; font-size:12px; font-weight:600; color:var(--text-primary);">Project Access & Assignments:</div>';
+                const projOpts = Array.from(projectSelect.options);
+
+                projOpts.forEach(o => {
+                    const isAssigned = assignedProjects.includes(o.text);
+                    projHtml += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; background:#FAFBFD; padding:8px 12px; border-radius:6px; border:1px solid var(--border-subtle);">
+                            <span style="font-size:12px; font-weight:500; color:var(--text-primary);">${o.text}</span>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; color:var(--text-secondary); margin:0;">
+                                <input type="checkbox" class="s_proj_membership_chk" data-id="${o.value}" ${isAssigned ? 'checked' : ''}>
+                                Allow Access
+                            </label>
+                        </div>
+                    `;
+                });
+
+                dlg.innerHTML = `
+                    <div class="modal-card" style="max-width: 440px;">
+                        <div class="modal-header">
+                            <span class="modal-title">Manage Permissions: ${email}</span>
+                            <button type="button" class="btn btn-ghost btn-sm" id="closeSettingsBtnX">✕</button>
+                        </div>
+                        <div class="modal-body">
+                            ${projHtml}
+                            <div style="margin-top:14px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+                                <div style="margin-bottom:8px; font-size:12px; font-weight:600; color:var(--text-primary);">
+                                    Active Project Roles (${projectSelect.selectedOptions[0] ? projectSelect.selectedOptions[0].text : ''}):
+                                </div>
+                                <label style="display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; cursor:pointer;">
+                                    <input type="checkbox" id="s_is_admin" ${s.is_admin ? 'checked' : ''}>
+                                    Project Administrator
+                                </label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                                    <input type="checkbox" id="s_can_approve" ${s.can_approve_leaves ? 'checked' : ''}>
+                                    Can Review & Approve Leaves
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="closeSettingsBtn" class="btn btn-ghost">Cancel</button>
+                            <button id="saveSettingsBtn" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(dlg);
+
+                const removeModal = () => dlg.remove();
+                document.getElementById('closeSettingsBtn').addEventListener('click', removeModal);
+                document.getElementById('closeSettingsBtnX').addEventListener('click', removeModal);
+
+                document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+                    const projChecks = Array.from(dlg.querySelectorAll('.s_proj_membership_chk'));
+                    for (const chk of projChecks) {
+                        const pId = chk.getAttribute('data-id');
+                        const pName = chk.parentElement.textContent.trim();
+                        const wasAssigned = assignedProjects.includes(pName);
+                        const nowAllowed = chk.checked;
+
+                        await fetch('/api/projects/' + pId + '/members/' + encodeURIComponent(email) + '/settings/', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ is_allowed: nowAllowed })
+                        });
+
+                        if (nowAllowed && !wasAssigned) {
+                            await fetch(`/api/projects/${pId}/members/`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ email: email, action: 'add' })
+                            });
+                        }
+                    }
+
+                    const payload = {
+                        is_admin: !!document.getElementById('s_is_admin').checked,
+                        can_approve_leaves: !!document.getElementById('s_can_approve').checked
+                    };
+                    await fetch('/api/projects/' + encodeURIComponent(currentProj) + '/members/' + encodeURIComponent(email) + '/settings/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    alert('Permissions updated successfully');
+                    dlg.remove();
+                    loadUsers();
+                });
+            })
+            .catch(e => {
+                console.error(e);
+                alert('Error loading member settings');
+            });
+        });
+
+        const projectSelect = document.getElementById('projectSelect');
+        if (projectSelect) {
+            projectSelect.addEventListener('change', function () {
+                loadUsers();
+            });
+        }
+
+        loadUsers();
+    </script>
+</body>
+
+</html>

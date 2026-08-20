@@ -1,0 +1,387 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance & Accounts - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Finance & Accounts</span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn btn-ghost btn-sm" onclick="exportFinance('csv')">Export CSV</button>
+                <button class="btn btn-primary btn-sm" id="createInvoiceBtn">+ Create Invoice</button>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Financial KPIs -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value" id="stat-revenue" style="color: var(--success-green);">$0</div>
+                    <div class="stat-delta delta-up">● Invoiced YTD</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Operational Expenses</div>
+                    <div class="stat-value" id="stat-expenses" style="color: var(--danger-red);">$0</div>
+                    <div class="stat-delta delta-down">● Logged spend</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Payroll Disbursement</div>
+                    <div class="stat-value" id="stat-payroll" style="color: var(--info-blue);">$0</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● Monthly salaries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Estimated GST Payable</div>
+                    <div class="stat-value" id="payable-gst" style="color: var(--warning-amber);">$0</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● 18% standard rate</div>
+                </div>
+            </div>
+
+            <!-- Transactions Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Recent General Ledger Transactions</span>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-ghost btn-sm" id="logExpenseBtn">+ Log Expense</button>
+                        <button class="btn btn-ghost btn-sm" id="payoutSalaryBtn">+ Payout Salary</button>
+                        <button class="btn btn-ghost btn-sm" id="addBillBtn">+ Add Bill</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Entity / Vendor</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                                    Loading transaction ledger...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tax & Reconcile Panels -->
+            <div class="grid-2">
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">GST / VAT Tax Overview</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="stat-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="stat-card">
+                                <div class="stat-label">Output Tax Due</div>
+                                <div style="font-size: 18px; font-weight: 700; color: var(--danger-red);">$0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Input Tax Credit</div>
+                                <div style="font-size: 18px; font-weight: 700; color: var(--success-green);">$0</div>
+                            </div>
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 12px;">
+                            * Calculated dynamically based on 18% standard GST taxation bracket.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Account Reconciliation & Reporting</span>
+                    </div>
+                    <div class="panel-body">
+                        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                            <button class="btn btn-primary" onclick="reconcileBank()">Sync Bank Statements</button>
+                            <button class="btn btn-ghost" onclick="generateReport('tax')">Generate Tax Report (PDF)</button>
+                            <button class="btn btn-ghost" onclick="exportFinance('pdf')">Export Balance Sheet</button>
+                        </div>
+                        <div id="statusMsg" style="margin-top: 14px; font-size: 12px; min-height: 16px;"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Finance Actions -->
+    <div id="financeModal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">Finance Action</span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="modalFields" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div id="field1Container">
+                        <label id="label1">Entity / Vendor Name</label>
+                        <input type="text" id="field1" placeholder="Client or Vendor Name">
+                    </div>
+                    <div id="field2Container">
+                        <label id="label2">Amount ($)</label>
+                        <input type="number" id="field2" placeholder="0.00" step="0.01">
+                    </div>
+                    <div id="gstFieldContainer" style="display: none;">
+                        <label>GST Rate (%)</label>
+                        <select id="gstRate">
+                            <option value="0">0% (Nil)</option>
+                            <option value="5">5% (Essential)</option>
+                            <option value="12">12% (Standard Low)</option>
+                            <option value="18" selected>18% (Standard)</option>
+                            <option value="28">28% (Luxury)</option>
+                        </select>
+                    </div>
+                    <div id="categoryFieldContainer" style="display: none;">
+                        <label>Expense Category</label>
+                        <input type="text" id="expenseCategory" placeholder="e.g. Marketing, Cloud Infrastructure, Rent">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmActionBtn">Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('financeModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const field1 = document.getElementById('field1');
+        const field2 = document.getElementById('field2');
+        const label1 = document.getElementById('label1');
+        const label2 = document.getElementById('label2');
+        const statusMsg = document.getElementById('statusMsg');
+
+        const gstContainer = document.getElementById('gstFieldContainer');
+        const categoryContainer = document.getElementById('categoryFieldContainer');
+
+        let currentAction = '';
+
+        async function loadFinanceData() {
+            try {
+                const res = await fetch('/api/finance/data/');
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    document.getElementById('stat-revenue').textContent = '$' + data.revenue.toLocaleString();
+                    document.getElementById('stat-expenses').textContent = '$' + data.expenses.toLocaleString();
+                    document.getElementById('stat-payroll').textContent = '$' + data.payroll.toLocaleString();
+
+                    const tbody = document.getElementById('transactionTableBody');
+                    tbody.innerHTML = '';
+                    if (data.recent.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No transactions recorded.</td></tr>';
+                    } else {
+                        data.recent.forEach(txn => {
+                            const tr = document.createElement('tr');
+                            const isPaid = (txn.status || '').toLowerCase() === 'paid';
+                            tr.innerHTML = `
+                                <td>${txn.date}</td>
+                                <td><span class="badge badge-gray">${txn.type}</span></td>
+                                <td style="font-weight:600; color:var(--text-primary);">${txn.entity}</td>
+                                <td style="font-weight:600;">$${txn.amount.toLocaleString()}</td>
+                                <td><span class="badge ${isPaid ? 'badge-green' : 'badge-amber'}">${txn.status}</span></td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    document.getElementById('payable-gst').textContent = '$' + (data.revenue * 0.18).toLocaleString();
+                }
+            } catch (e) {
+                console.error('Data load error', e);
+            }
+        }
+
+        function openModal(action, title, l1, l2) {
+            currentAction = action;
+            modalTitle.textContent = title;
+            label1.textContent = l1;
+            label2.textContent = l2;
+            field1.value = '';
+            field2.value = '';
+
+            gstContainer.style.display = action === 'invoice' ? 'block' : 'none';
+            categoryContainer.style.display = action === 'expense' ? 'block' : 'none';
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        document.getElementById('createInvoiceBtn').onclick = () => openModal('invoice', 'Create New Invoice', 'Client Name', 'Base Amount ($)');
+        document.getElementById('logExpenseBtn').onclick = () => openModal('expense', 'Log Business Expense', 'Description', 'Amount ($)');
+        document.getElementById('payoutSalaryBtn').onclick = () => openModal('salary', 'Salary Payout Record', 'Employee Name', 'Net Salary ($)');
+        document.getElementById('addBillBtn').onclick = () => openModal('bill', 'Register New Bill', 'Vendor Name', 'Bill Amount ($)');
+
+        document.getElementById('confirmActionBtn').onclick = async () => {
+            const val1 = field1.value.trim();
+            const val2 = field2.value.trim();
+            if (!val1 || !val2) return alert('Please fill all fields');
+
+            const urls = {
+                'invoice': '/api/finance/invoice/',
+                'expense': '/api/finance/expense/',
+                'salary': '/api/finance/salary/',
+                'bill': '/api/finance/bill/'
+            };
+
+            const bodyData = {
+                entity: val1,
+                amount: val2
+            };
+
+            if (currentAction === 'invoice') bodyData.gst_rate = document.getElementById('gstRate').value;
+            if (currentAction === 'expense') bodyData.category = document.getElementById('expenseCategory').value;
+
+            try {
+                const res = await fetch(urls[currentAction], {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bodyData)
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    statusMsg.textContent = data.message;
+                    statusMsg.style.color = 'var(--success-green)';
+                    closeModal();
+                    loadFinanceData();
+                    setTimeout(() => statusMsg.textContent = '', 4000);
+                } else {
+                    alert(data.message || 'Error occurred');
+                }
+            } catch (e) {
+                alert('Connection error');
+            }
+        };
+
+        function exportFinance(format) {
+            window.location.href = `/api/finance/export/?format=${format}`;
+        }
+
+        async function generateReport(type) {
+            statusMsg.textContent = `Generating ${type} report...`;
+            statusMsg.style.color = 'var(--primary-accent)';
+            try {
+                const res = await fetch('/api/reports/generate/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ report_type: type, format: 'pdf' })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    const blob = b64toBlob(data.file_data, data.content_type);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${type}_Statement.pdf`;
+                    a.click();
+                    statusMsg.textContent = 'Report generated!';
+                    statusMsg.style.color = 'var(--success-green)';
+                }
+            } catch (e) {
+                statusMsg.textContent = 'Error generating report';
+                statusMsg.style.color = 'var(--danger-red)';
+            }
+        }
+
+        function reconcileBank() {
+            alert('Bank reconciliation module activated. Syncing ledger with corporate bank feed...');
+        }
+
+        function b64toBlob(b64Data, contentType = '', sliceSize = 512) {
+            const byteCharacters = atob(b64Data);
+            const byteArrays = [];
+            for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                const slice = byteCharacters.slice(offset, offset + sliceSize);
+                const byteNumbers = new Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                byteArrays.push(byteArray);
+            }
+            return new Blob(byteArrays, { type: contentType });
+        }
+
+        window.onload = loadFinanceData;
+    </script>
+</body>
+
+</html>

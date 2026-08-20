@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Enterprise Settings</span>
+            </div>
+            <div class="topbar-right">
+                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <div class="grid-2" style="grid-template-columns: 1fr 340px;">
+                <!-- Left: Profile Configuration -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Organization Profile</span>
+                    </div>
+                    <div class="panel-body" style="display: flex; flex-direction: column; gap: 14px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Workspace / Company Legal Name *</label>
+                            <input id="companyName" value="{{ company_name }}" placeholder="Company name">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Direct Contact Phone</label>
+                                <input id="companyPhone" value="{{ co_info.phone|default:'' }}" placeholder="+1 555-0100">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label>Corporate Website</label>
+                                <input id="companyWebsite" value="{{ co_info.website|default:'' }}" placeholder="https://example.com">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Industry & Mission Summary</label>
+                            <textarea id="companyDesc" rows="4" placeholder="Brief organization profile...">{{ co_info.industry|default:'' }}</textarea>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+                            <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                            <span id="settingsStatus" style="font-size: 12px;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Live Preview Card -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">Public Tenant Card</span>
+                        </div>
+                        <div class="panel-body">
+                            <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);" id="previewName">{{ company_name }}</div>
+                            <div style="margin-top: 10px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                                📞 <span id="previewPhoneValue" style="color: var(--text-secondary);">{{ co_info.phone|default:'-' }}</span>
+                            </div>
+                            <div style="margin-top: 6px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                                🌐 <span id="previewWebsiteValue" style="color: var(--text-secondary);">{{ co_info.website|default:'-' }}</span>
+                            </div>
+                            <hr style="margin: 12px 0; border: 0; border-top: 1px solid var(--border-subtle);">
+                            <div id="previewDesc" style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;">
+                                {{ co_info.industry|default:'No description yet.' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <span class="panel-title">System Information</span>
+                        </div>
+                        <div class="panel-body" style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                            <div>Edition: <strong style="color: var(--text-primary);">Enterprise ERP v2.4</strong></div>
+                            <div>Database: <strong style="color: var(--text-primary);">SQLite / Cloud Sync</strong></div>
+                            <div>Tenant ID: <strong style="color: var(--text-primary);">{{ email|slice:":8" }}...</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function updatePreview() {
+            document.getElementById('previewName').textContent = document.getElementById('companyName').value || 'Company Name';
+            document.getElementById('previewPhoneValue').textContent = document.getElementById('companyPhone').value || '-';
+            document.getElementById('previewWebsiteValue').textContent = document.getElementById('companyWebsite').value || '-';
+            document.getElementById('previewDesc').textContent = document.getElementById('companyDesc').value || 'No description yet.';
+        }
+
+        ['companyName', 'companyPhone', 'companyWebsite', 'companyDesc'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updatePreview);
+        });
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', async function () {
+            const name = document.getElementById('companyName').value.trim();
+            const st = document.getElementById('settingsStatus');
+
+            if (!name) {
+                st.textContent = 'Enter a company name';
+                st.style.color = 'var(--danger-red)';
+                return;
+            }
+            st.textContent = 'Saving changes...';
+            st.style.color = 'var(--text-muted)';
+
+            try {
+                const res = await fetch('/api/save-settings/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ company_name: name })
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    st.textContent = 'Settings saved successfully!';
+                    st.style.color = 'var(--success-green)';
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    st.textContent = data.message || 'Failed';
+                    st.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                st.textContent = 'Error saving settings';
+                st.style.color = 'var(--danger-red)';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Reports - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .report-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: #FAFBFD;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            margin-bottom: 10px;
+            gap: 14px;
+        }
+
+        .report-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--info-bg);
+            color: var(--info-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/dashboard/" class="brand-block">
+            <div class="brand-logo">TN</div>
+            <div class="brand-text">
+                <span class="brand-name">TeamNext</span>
+                <span class="brand-sub">Enterprise ERP</span>
+            </div>
+        </a>
+
+        <div class="user-block">
+            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ email }}</span>
+                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
+            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
+            <a href="/reports-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
+
+            <div class="nav-section-label">Operations</div>
+            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
+            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
+            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
+            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
+
+            <div class="nav-section-label">Finance</div>
+            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
+
+            <div class="nav-section-label">Collaboration</div>
+            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
+            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
+            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
+
+            <div class="nav-section-label">System</div>
+            {% if is_company_admin %}
+            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
+            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
+            {% endif %}
+            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb-root">TeamNext</span>
+                <span class="breadcrumb-sep">/</span>
+                <span class="page-title">Enterprise Reports</span>
+            </div>
+            <div class="topbar-right">
+                <a href="/analytics-page/" class="btn btn-ghost btn-sm">View Analytics Dashboard</a>
+            </div>
+        </div>
+
+        <main class="content-area">
+            <!-- Stat Cards -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Reports Generated</div>
+                    <div class="stat-value" style="color: #9333EA;">342</div>
+                    <div class="stat-delta delta-up">● All time exports</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Scheduled Batch Jobs</div>
+                    <div class="stat-value" style="color: var(--primary-accent);">8</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● Executing tonight</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Data Accuracy Rating</div>
+                    <div class="stat-value" style="color: var(--success-green);">99.8%</div>
+                    <div class="stat-delta delta-up">● Fully reconciled</div>
+                </div>
+            </div>
+
+            <!-- Available Reports Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Available Export Templates</span>
+                </div>
+                <div class="panel-body">
+                    <div class="report-item">
+                        <div class="report-icon">📊</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Monthly Financial Statement</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Comprehensive revenue breakdown, itemized expenses, and net profit margins.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Financial', 'pdf')" style="color: var(--danger-red);">PDF</button>
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Financial', 'excel')" style="color: var(--success-green);">Excel</button>
+                        </div>
+                    </div>
+
+                    <div class="report-item">
+                        <div class="report-icon">👥</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Employee Productivity & Attendance Audit</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Attendance compliance metrics across all project departments and workforce units.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Productivity', 'pdf')" style="color: var(--danger-red);">PDF</button>
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Productivity', 'excel')" style="color: var(--success-green);">Excel</button>
+                        </div>
+                    </div>
+
+                    <div class="report-item">
+                        <div class="report-icon">📦</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Inventory Utilization & Hardware Stock</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Current stock status, hardware allocation by custodian, and maintenance schedules.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Inventory', 'pdf')" style="color: var(--danger-red);">PDF</button>
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Inventory', 'excel')" style="color: var(--success-green);">Excel</button>
+                        </div>
+                    </div>
+
+                    <div class="report-item">
+                        <div class="report-icon">🎟️</div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Support Ticket Resolution & SLA Metrics</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Mean response time, priority resolution metrics, and ticket backlogs.</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Support', 'pdf')" style="color: var(--danger-red);">PDF</button>
+                            <button class="btn btn-ghost btn-sm" onclick="generateReport('Support', 'excel')" style="color: var(--success-green);">Excel</button>
+                        </div>
+                    </div>
+
+                    <div id="genStatus" style="margin-top: 10px; text-align: center; font-size: 12px; min-height: 16px;"></div>
+                </div>
+            </div>
+
+            <!-- Recent Downloads Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Recent Document Exports</span>
+                </div>
+                <div class="panel-body">
+                    <div id="downloadsContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAFBFD; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                            <span style="font-size: 12px; font-weight: 500; color: var(--text-primary);">Q4_Quarterly_Review.pdf</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">2 hours ago</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAFBFD; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                            <span style="font-size: 12px; font-weight: 500; color: var(--text-primary);">Department_Structure_Export.csv</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Yesterday</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function generateReport(type, format) {
+            const status = document.getElementById('genStatus');
+            const btns = document.querySelectorAll('.report-item button');
+
+            btns.forEach(b => b.disabled = true);
+            status.textContent = `Generating ${type} report (${format.toUpperCase()})...`;
+            status.style.color = 'var(--primary-accent)';
+
+            try {
+                const res = await fetch('/api/reports/generate/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ report_type: type, format: format })
+                });
+                const data = await res.json();
+
+                if (data.status === 'ok' && data.file_data) {
+                    status.textContent = 'Report ready, downloading...';
+                    status.style.color = 'var(--success-green)';
+
+                    const ext = format === 'pdf' ? 'pdf' : 'xlsx';
+                    const fileName = `${type}_Report_${new Date().toISOString().split('T')[0]}.${ext}`;
+
+                    const binaryData = atob(data.file_data);
+                    const array = new Uint8Array(binaryData.length);
+                    for (let i = 0; i < binaryData.length; i++) {
+                        array[i] = binaryData.charCodeAt(i);
+                    }
+
+                    const blob = new Blob([array], { type: data.content_type });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    const downloads = document.getElementById('downloadsContainer');
+                    if (downloads) {
+                        const newDownload = document.createElement('div');
+                        newDownload.style = "display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #FAFBFD; border-radius: 6px; border: 1px solid var(--border-subtle);";
+                        newDownload.innerHTML = `
+                            <span style="font-size: 12px; font-weight: 500; color: var(--text-primary);">${fileName}</span>
+                            <span style="font-size: 11px; color: var(--text-muted);">Just now</span>
+                        `;
+                        downloads.prepend(newDownload);
+                    }
+                } else {
+                    status.textContent = data.message || 'Error generating report';
+                    status.style.color = 'var(--danger-red)';
+                }
+            } catch (e) {
+                status.textContent = 'Connection error. Please try again.';
+                status.style.color = 'var(--danger-red)';
+            } finally {
+                setTimeout(() => {
+                    btns.forEach(b => b.disabled = false);
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+
+</html>
