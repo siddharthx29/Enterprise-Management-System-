@@ -5,10 +5,10 @@
 <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-JETS327R52');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-JETS327R52');
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,7 +36,8 @@
                 <div class="auth-brand-header">
                     <div class="brand-logo">TN</div>
                     <div>
-                        <div style="font-size:16px; font-weight:700; color:#FFFFFF; letter-spacing:-0.3px;">TeamNext</div>
+                        <div style="font-size:16px; font-weight:700; color:#FFFFFF; letter-spacing:-0.3px;">TeamNext
+                        </div>
                         <div style="font-size:11px; color:#6B7A99;">Enterprise ERP System</div>
                     </div>
                 </div>
@@ -98,10 +99,12 @@
                         <input name="email" type="email" placeholder="Company or Employee Email" required>
                     </div>
                     <input type="hidden" name="purpose" value="login">
-                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Send Verification Code</button>
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Send Verification
+                        Code</button>
                 </form>
                 <div style="text-align:center; margin-top:16px;">
-                    <a href="/otp/" style="color:var(--primary-accent); font-size:12px; text-decoration:none; font-weight:500;">
+                    <a href="/otp/"
+                        style="color:var(--primary-accent); font-size:12px; text-decoration:none; font-weight:500;">
                         Already have a code? Verify &rarr;
                     </a>
                 </div>
@@ -126,9 +129,11 @@
                         <label>Password</label>
                         <input name="password" type="password" placeholder="Enter your password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Secure Login</button>
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Secure
+                        Login</button>
                     <div style="text-align:center; margin-top:14px;">
-                        <a href="#" id="forgotLink" style="color:var(--text-muted); font-size:12px; text-decoration:none;">Forgot password?</a>
+                        <a href="#" id="forgotLink"
+                            style="color:var(--text-muted); font-size:12px; text-decoration:none;">Forgot password?</a>
                     </div>
                 </form>
             </div>
@@ -153,16 +158,21 @@
                         </div>
                         <div class="form-group">
                             <label>Admin Email</label>
-                            <input name="company_email_signup" id="companyEmail" type="email" placeholder="admin@company.com" onchange="resetOtpState()">
+                            <input name="company_email_signup" id="companyEmail" type="email"
+                                placeholder="admin@company.com" onchange="resetOtpState()">
                         </div>
                         <div class="form-group">
                             <label>Verification OTP</label>
                             <div class="form-row">
-                                <input name="company_otp_signup" id="companyOtp" type="text" placeholder="Enter OTP" maxlength="4">
-                                <button type="button" id="getOtpBtn" class="btn btn-ghost" onclick="requestSignupOtp()" style="flex:0 0 110px;">Get OTP</button>
+                                <input name="company_otp_signup" id="companyOtp" type="text" placeholder="Enter OTP"
+                                    maxlength="4">
+                                <button type="button" id="getOtpBtn" class="btn btn-ghost" onclick="requestSignupOtp()"
+                                    style="flex:0 0 110px;">Get OTP</button>
                             </div>
-                            <div id="otpTimer" style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
-                                Expires in <span id="otpCount" style="color:var(--primary-accent); font-weight:600;">05:00</span>
+                            <div id="otpTimer"
+                                style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
+                                Expires in <span id="otpCount"
+                                    style="color:var(--primary-accent); font-weight:600;">05:00</span>
                             </div>
                         </div>
                         <div class="form-group">
@@ -185,26 +195,33 @@
                     <div id="employeeFields">
                         <div class="form-group">
                             <label>Step 1: Select Your Organization</label>
-                            <select id="companySelect" name="company_email" onchange="resetOtpState('employee')" style="margin-bottom:6px;">
+                            <select id="companySelect" name="company_email" onchange="resetOtpState('employee')"
+                                style="margin-bottom:6px;">
                                 <option value="">-- Select Registered Company --</option>
                                 {% for c in companies %}
                                 <option value="{{ c.email }}">{{ c.name }}</option>
                                 {% endfor %}
                             </select>
-                            <input id="companyFree" type="email" placeholder="Or enter company domain/email directly" onchange="resetOtpState('employee')">
+                            <input id="companyFree" type="email" placeholder="Or enter company domain/email directly"
+                                onchange="resetOtpState('employee')">
                         </div>
                         <div class="form-group">
                             <label>Company Verification OTP</label>
                             <div class="form-row">
-                                <input name="employee_otp_signup" id="employeeOtp" type="text" placeholder="Enter 4-digit OTP" maxlength="4">
-                                <button type="button" id="getEmployeeOtpBtn" class="btn btn-ghost" onclick="requestSignupOtp('employee')" style="flex:0 0 110px;">Get OTP</button>
+                                <input name="employee_otp_signup" id="employeeOtp" type="text"
+                                    placeholder="Enter 4-digit OTP" maxlength="4">
+                                <button type="button" id="getEmployeeOtpBtn" class="btn btn-ghost"
+                                    onclick="requestSignupOtp('employee')" style="flex:0 0 110px;">Get OTP</button>
                             </div>
-                            <div id="otpTimerEmployee" style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
-                                Expires in <span id="otpCountEmployee" style="color:var(--primary-accent); font-weight:600;">05:00</span>
+                            <div id="otpTimerEmployee"
+                                style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
+                                Expires in <span id="otpCountEmployee"
+                                    style="color:var(--primary-accent); font-weight:600;">05:00</span>
                             </div>
                         </div>
 
-                        <div style="font-size:12px; font-weight:600; color:var(--text-primary); margin:12px 0 6px 0; border-top:1px solid var(--border-subtle); padding-top:10px;">
+                        <div
+                            style="font-size:12px; font-weight:600; color:var(--text-primary); margin:12px 0 6px 0; border-top:1px solid var(--border-subtle); padding-top:10px;">
                             Step 2: Profile Details
                         </div>
                         <div class="form-group">
@@ -213,7 +230,8 @@
                         </div>
                         <div class="form-group">
                             <label>Your Work Email</label>
-                            <input name="employee_email_signup" id="employeeEmail" type="email" placeholder="john@company.com">
+                            <input name="employee_email_signup" id="employeeEmail" type="email"
+                                placeholder="john@company.com">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -227,13 +245,16 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px; margin-top:8px;">Create Enterprise Account</button>
+                    <button type="submit" class="btn btn-primary"
+                        style="width:100%; padding:10px; margin-top:8px;">Create Enterprise Account</button>
                 </form>
             </div>
 
             <!-- Forgot Password Panel -->
-            <div id="forgot-panel" style="display:none; margin-top:16px; padding:14px; background:#FAFBFD; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">Reset Password</div>
+            <div id="forgot-panel"
+                style="display:none; margin-top:16px; padding:14px; background:#FAFBFD; border-radius:8px; border:1px solid var(--border-color);">
+                <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">Reset
+                    Password</div>
                 <form method="POST" action="{% url 'forgot_password' %}">
                     {% csrf_token %}
                     <div class="form-group" style="margin-bottom:8px;">
