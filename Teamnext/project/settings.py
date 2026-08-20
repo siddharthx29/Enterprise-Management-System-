@@ -76,7 +76,7 @@ if 'DATABASE_URL' in os.environ:
         'default': dj_database_url.config(
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require={'sslmode': 'require'} if os.environ.get('DATABASE_URL','').startswith('postgres') else False
+            ssl_require=os.environ.get('DATABASE_URL', '').startswith(('postgres://', 'postgresql://'))
         )
     }
 else:

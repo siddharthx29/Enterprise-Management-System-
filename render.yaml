@@ -11,7 +11,7 @@ services:
     plan: free
     rootDir: Teamnext
     buildCommand: "bash ./build.sh"
-    startCommand: "gunicorn project.wsgi:application"
+    startCommand: "python manage.py migrate && gunicorn project.wsgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

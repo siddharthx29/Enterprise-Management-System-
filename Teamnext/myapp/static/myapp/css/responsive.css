@@ -12,10 +12,13 @@
   .collab-hub {
     grid-template-columns: 1fr !important;
   }
+  .chat-layout {
+    grid-template-columns: 240px 1fr !important;
+  }
 }
 
 @media (max-width: 768px) {
-  /* Layout collapses to 48px mini sidebar */
+  /* Layout collapses to 48px mini icon-only sidebar */
   body.app-layout {
     grid-template-columns: 48px 1fr !important;
   }
@@ -88,10 +91,21 @@
     align-items: stretch !important;
   }
 
+  .chat-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+
+  /* Reduce 3D decoration intensity on mobile for performance */
+  .erp-3d-background {
+    opacity: 0.03 !important;
+  }
+
   /* Auth Card Mobile */
   .auth-card {
     grid-template-columns: 1fr !important;
     min-height: auto !important;
+    width: 100% !important;
   }
 
   .auth-brand-side {
