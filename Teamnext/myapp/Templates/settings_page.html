@@ -29,70 +29,26 @@
         <div class="erp-3d-shape erp-3d-mesh"></div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <a href="/dashboard/" class="brand-block">
-            <div class="brand-logo">TN</div>
-            <div class="brand-text">
-                <span class="brand-name">TeamNext</span>
-                <span class="brand-sub">Enterprise ERP</span>
-            </div>
-        </a>
-
-        <div class="user-block">
-            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
-            <div class="user-info">
-                <span class="user-name">{{ email }}</span>
-                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
-            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
-            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
-
-            <div class="nav-section-label">Operations</div>
-            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
-            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
-            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
-            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
-
-            <div class="nav-section-label">Finance</div>
-            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
-
-            <div class="nav-section-label">Collaboration</div>
-            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
-            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
-            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
-
-            <div class="nav-section-label">System</div>
-            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
-            <a href="/settings-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
-            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
-        </nav>
-    </aside>
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    {% include "components/sidebar.html" with active_page="settings" %}
 
     <!-- Main Content -->
     <div class="main-wrapper">
-        <div class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb-root">TeamNext</span>
-                <span class="breadcrumb-sep">/</span>
-                <span class="page-title">Enterprise Settings</span>
-            </div>
-            <div class="topbar-right">
-                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
-            </div>
-        </div>
+        <!-- Reusable Top Navigation Bar -->
+        {% include "components/topbar.html" with page_title="Settings" action_label="Save Changes" action_onclick="document.querySelector('form button[type=submit]') ? document.querySelector('form button[type=submit]').click() : null" %}
 
         <main class="content-area">
             <div class="grid-2" style="grid-template-columns: 1fr 340px;">
                 <!-- Left: Profile Configuration -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title">Organization Profile</span>
+                        <span class="panel-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            <span>Organization Profile</span>
+                        </span>
                     </div>
                     <div class="panel-body" style="display: flex; flex-direction: column; gap: 14px;">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -117,7 +73,10 @@
                         </div>
 
                         <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
-                            <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                            <button id="saveSettingsBtn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                <span>Save Settings</span>
+                            </button>
                             <span id="settingsStatus" style="font-size: 12px;"></span>
                         </div>
                     </div>
@@ -127,7 +86,10 @@
                 <div style="display: flex; flex-direction: column; gap: 16px;">
                     <div class="panel">
                         <div class="panel-header">
-                            <span class="panel-title">Public Tenant Card</span>
+                            <span class="panel-title">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                                <span>Public Tenant Card</span>
+                            </span>
                         </div>
                         <div class="panel-body">
                             <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);" id="previewName">{{ company_name }}</div>
@@ -146,7 +108,10 @@
 
                     <div class="panel">
                         <div class="panel-header">
-                            <span class="panel-title">System Information</span>
+                            <span class="panel-title">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <span>System Information</span>
+                            </span>
                         </div>
                         <div class="panel-body" style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
                             <div>Edition: <strong style="color: var(--text-primary);">Enterprise ERP v2.4</strong></div>

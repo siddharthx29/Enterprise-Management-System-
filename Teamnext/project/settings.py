@@ -140,11 +140,32 @@ EMAIL_TIMEOUT = 30
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL") or EMAIL_HOST_USER
 
 # ============================================================
-# Session settings for reliability on Render
+# Enterprise Security & Header Hardening
+# ============================================================
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+# Static asset performance & caching (1 year for immutable assets)
+WHITENOISE_MAX_AGE = 31536000 if not DEBUG else 0
+
+# ============================================================
+# Session settings for enterprise reliability & security
 # ============================================================
 SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 86400  # 24 hours
 
 # ============================================================
 # Logging — prints ALL errors including email errors to Render logs

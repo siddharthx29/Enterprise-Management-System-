@@ -12,11 +12,112 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeamNext Enterprise Management Tool - Login</title>
+    <title>TeamNext Enterprise ERP - Login</title>
     <link rel="icon" type="image/svg+xml" href="{% static 'myapp/images/logo.svg' %}">
     <link rel="stylesheet" href="/static/myapp/css/theme.css">
     <link rel="stylesheet" href="/static/myapp/css/responsive.css">
     <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .auth-card-exact {
+            display: grid;
+            grid-template-columns: 360px 480px;
+            width: 840px;
+            max-width: 100%;
+            min-height: 560px;
+            background: #FFFFFF;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-left-panel {
+            background: #0B111E;
+            padding: 44px 34px 30px 34px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #FFFFFF;
+            position: relative;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+
+        .auth-geo-art {
+            position: relative;
+            width: 100%;
+            height: 110px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .geo-sphere-3d {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #3B82F6, #1E3A8A 70%, #0F172A 100%);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+            left: 20px;
+            bottom: 10px;
+        }
+
+        .geo-cube-3d {
+            position: absolute;
+            width: 54px;
+            height: 54px;
+            background: linear-gradient(135deg, #1E293B, #0F172A);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            border-radius: 10px;
+            transform: rotate(-15deg) skew(-5deg);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            left: 80px;
+            bottom: 25px;
+        }
+
+        .geo-torus-3d {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 10px solid #2563EB;
+            border-top-color: #60A5FA;
+            border-bottom-color: #1E3A8A;
+            transform: rotateX(60deg) rotateY(20deg);
+            right: 25px;
+            bottom: 15px;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+        }
+
+        .auth-right-panel {
+            padding: 44px 48px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #FFFFFF;
+        }
+
+        .form-check-label {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            user-select: none;
+        }
+
+        .form-check-label input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--primary-accent);
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body class="auth-layout">
@@ -29,16 +130,16 @@
         <div class="erp-3d-shape erp-3d-mesh"></div>
     </div>
 
-    <div class="auth-card">
-        <!-- Left Column: Brand & Value Props -->
-        <div class="auth-brand-side">
+    <div class="auth-card-exact">
+        <!-- Left Column: Corporate Brand & 3D Artwork -->
+        <div class="auth-left-panel">
             <div>
+                <!-- Brand Header -->
                 <div class="auth-brand-header">
                     <div class="brand-logo">TN</div>
                     <div>
-                        <div style="font-size:16px; font-weight:700; color:#FFFFFF; letter-spacing:-0.3px;">TeamNext
-                        </div>
-                        <div style="font-size:11px; color:#6B7A99;">Enterprise ERP System</div>
+                        <div style="font-size:16px; font-weight:700; color:#FFFFFF; letter-spacing:-0.2px; line-height:1.2;">TeamNext</div>
+                        <div style="font-size:10.5px; color:#64748B; font-weight:500;">Enterprise ERP</div>
                     </div>
                 </div>
 
@@ -46,35 +147,39 @@
                     Run your business.<br>All in one place.
                 </div>
 
+                <!-- 4 Value Propositions from Reference Design -->
                 <div class="auth-features">
                     <div class="auth-feature-item">
                         <div class="auth-feature-check">✓</div>
-                        <div>Unified Operations & Multi-Department Management</div>
+                        <div>Complete Business Management</div>
                     </div>
                     <div class="auth-feature-item">
                         <div class="auth-feature-check">✓</div>
-                        <div>Real-Time Financial Audits & Invoice Tracking</div>
+                        <div>Real-time Analytics & Reports</div>
                     </div>
                     <div class="auth-feature-item">
                         <div class="auth-feature-check">✓</div>
-                        <div>Attendance Tracking & Automated Payroll Calculation</div>
+                        <div>Secure & Scalable Platform</div>
                     </div>
                     <div class="auth-feature-item">
                         <div class="auth-feature-check">✓</div>
-                        <div>Enterprise-Grade Role Based Access Control</div>
+                        <div>24/7 Support & Updates</div>
                     </div>
                 </div>
             </div>
 
-            <div style="font-size:11px; color:#5A6880; border-top:1px solid rgba(255,255,255,0.06); padding-top:16px;">
-                &copy; TeamNext Inc. Corporate Command Center
+            <!-- 3D Geometric Aesthetic Art -->
+            <div class="auth-geo-art">
+                <div class="geo-sphere-3d"></div>
+                <div class="geo-cube-3d"></div>
+                <div class="geo-torus-3d"></div>
             </div>
         </div>
 
-        <!-- Right Column: Authentication Forms -->
-        <div class="auth-form-side">
-            <div class="auth-title">Access Portal</div>
-            <div class="auth-subtitle">Sign in to your enterprise workspace</div>
+        <!-- Right Column: Authentication Form -->
+        <div class="auth-right-panel">
+            <div class="auth-title">Welcome Back!</div>
+            <div class="auth-subtitle">Sign in to your account</div>
 
             {% if messages %}
             {% for message in messages %}
@@ -85,57 +190,67 @@
             {% endif %}
 
             <div class="auth-modes">
-                <button type="button" class="auth-mode-btn mode-btn active" data-mode="otp">OTP Login</button>
-                <button type="button" class="auth-mode-btn mode-btn" data-mode="password">Password</button>
+                <button type="button" class="auth-mode-btn mode-btn active" data-mode="password">Password</button>
+                <button type="button" class="auth-mode-btn mode-btn" data-mode="otp">OTP Login</button>
                 <button type="button" class="auth-mode-btn mode-btn" data-mode="signup">Sign Up</button>
             </div>
 
-            <!-- OTP Login Mode -->
-            <div id="mode-otp" class="modePanel">
-                <form method="POST" action="{% url 'send_otp' %}">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input name="email" type="email" placeholder="Company or Employee Email" required>
-                    </div>
-                    <input type="hidden" name="purpose" value="login">
-                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Send Verification
-                        Code</button>
-                </form>
-                <div style="text-align:center; margin-top:16px;">
-                    <a href="/otp/"
-                        style="color:var(--primary-accent); font-size:12px; text-decoration:none; font-weight:500;">
-                        Already have a code? Verify &rarr;
-                    </a>
-                </div>
-            </div>
-
-            <!-- Password Login Mode -->
-            <div id="mode-password" class="modePanel" style="display:none;">
+            <!-- Password Login Mode (Default matching screenshot) -->
+            <div id="mode-password" class="modePanel">
                 <form method="POST" action="{% url 'password_login' %}">
                     {% csrf_token %}
                     <div class="form-group">
-                        <label>Account Type</label>
-                        <select name="kind">
-                            <option value="employee">Employee Login</option>
-                            <option value="company">Company Access</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Email Address</label>
-                        <input name="email" type="email" placeholder="Enter your email" required>
+                        <label>Username or Email</label>
+                        <input name="email" type="email" placeholder="Enter your email" required autofocus>
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input name="password" type="password" placeholder="Enter your password" required>
+                        <div style="position:relative;">
+                            <input name="password" id="loginPassInput" type="password" placeholder="Enter your password" required style="padding-right:38px;">
+                            <span onclick="togglePasswordVisibility('loginPassInput', this)" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:var(--text-muted);">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </span>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="width:100%; padding:10px;">Secure
-                        Login</button>
-                    <div style="text-align:center; margin-top:14px;">
-                        <a href="#" id="forgotLink"
-                            style="color:var(--text-muted); font-size:12px; text-decoration:none;">Forgot password?</a>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-size:11px; color:var(--text-muted);">Account Type</label>
+                        <select name="kind" style="padding:7px 10px; font-size:12px;">
+                            <option value="employee">Employee Login</option>
+                            <option value="company">Company Administrator</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                        <label class="form-check-label">
+                            <input type="checkbox" name="remember_me" checked> Remember me
+                        </label>
+                        <a href="#" id="forgotLink" style="color:var(--primary-accent); font-size:12px; text-decoration:none; font-weight:500;">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; font-size:13.5px; font-weight:600; border-radius:8px;">Sign In</button>
+
+                    <div style="text-align:center; margin-top:20px; font-size:12.5px; color:var(--text-secondary);">
+                        Don't have an account? <a href="#" onclick="switchMode('signup')" style="color:var(--primary-accent); text-decoration:none; font-weight:600;">Sign up</a>
                     </div>
                 </form>
+            </div>
+
+            <!-- OTP Login Mode -->
+            <div id="mode-otp" class="modePanel" style="display:none;">
+                <form method="POST" action="{% url 'send_otp' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Registered Work Email</label>
+                        <input name="email" type="email" placeholder="Enter your work email address" required>
+                    </div>
+                    <input type="hidden" name="purpose" value="login">
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; font-size:13.5px; font-weight:600; border-radius:8px;">Send Verification Code</button>
+                </form>
+                <div style="text-align:center; margin-top:16px;">
+                    <a href="/otp/" style="color:var(--primary-accent); font-size:12px; text-decoration:none; font-weight:500;">
+                        Already have a code? Verify &rarr;
+                    </a>
+                </div>
             </div>
 
             <!-- Sign Up Mode -->
@@ -150,29 +265,24 @@
                         </select>
                     </div>
 
-                    <!-- Company Fields -->
+                    <!-- Company Registration Fields -->
                     <div id="companyFields" style="display:none">
                         <div class="form-group">
                             <label>Company / Workspace Name</label>
                             <input name="company_name" type="text" placeholder="e.g. Acme Corporation">
                         </div>
                         <div class="form-group">
-                            <label>Admin Email</label>
-                            <input name="company_email_signup" id="companyEmail" type="email"
-                                placeholder="admin@company.com" onchange="resetOtpState()">
+                            <label>Admin Work Email</label>
+                            <input name="company_email_signup" id="companyEmail" type="email" placeholder="admin@company.com" onchange="resetOtpState()">
                         </div>
                         <div class="form-group">
                             <label>Verification OTP</label>
                             <div class="form-row">
-                                <input name="company_otp_signup" id="companyOtp" type="text" placeholder="Enter OTP"
-                                    maxlength="4">
-                                <button type="button" id="getOtpBtn" class="btn btn-ghost" onclick="requestSignupOtp()"
-                                    style="flex:0 0 110px;">Get OTP</button>
+                                <input name="company_otp_signup" id="companyOtp" type="text" placeholder="Enter OTP" maxlength="4">
+                                <button type="button" id="getOtpBtn" class="btn btn-ghost" onclick="requestSignupOtp()" style="flex:0 0 100px;">Get OTP</button>
                             </div>
-                            <div id="otpTimer"
-                                style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
-                                Expires in <span id="otpCount"
-                                    style="color:var(--primary-accent); font-weight:600;">05:00</span>
+                            <div id="otpTimer" style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
+                                Expires in <span id="otpCount" style="color:var(--primary-accent); font-weight:600;">05:00</span>
                             </div>
                         </div>
                         <div class="form-group">
@@ -181,57 +291,41 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>Phone</label>
-                                <input name="phone" type="text" placeholder="Contact number">
-                            </div>
-                            <div class="form-group">
                                 <label>Industry</label>
-                                <input name="industry" type="text" placeholder="e.g. Technology">
+                                <input name="industry" type="text" placeholder="e.g. Technology / Finance">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Employee Fields -->
+                    <!-- Employee Registration Fields -->
                     <div id="employeeFields">
                         <div class="form-group">
-                            <label>Step 1: Select Your Organization</label>
-                            <select id="companySelect" name="company_email" onchange="resetOtpState('employee')"
-                                style="margin-bottom:6px;">
+                            <label>Select Your Organization</label>
+                            <select id="companySelect" name="company_email" onchange="resetOtpState('employee')" style="margin-bottom:6px;">
                                 <option value="">-- Select Registered Company --</option>
                                 {% for c in companies %}
                                 <option value="{{ c.email }}">{{ c.name }}</option>
                                 {% endfor %}
                             </select>
-                            <input id="companyFree" type="email" placeholder="Or enter company domain/email directly"
-                                onchange="resetOtpState('employee')">
+                            <input id="companyFree" type="email" placeholder="Or enter company email directly" onchange="resetOtpState('employee')">
                         </div>
                         <div class="form-group">
                             <label>Company Verification OTP</label>
                             <div class="form-row">
-                                <input name="employee_otp_signup" id="employeeOtp" type="text"
-                                    placeholder="Enter 4-digit OTP" maxlength="4">
-                                <button type="button" id="getEmployeeOtpBtn" class="btn btn-ghost"
-                                    onclick="requestSignupOtp('employee')" style="flex:0 0 110px;">Get OTP</button>
+                                <input name="employee_otp_signup" id="employeeOtp" type="text" placeholder="4-digit OTP" maxlength="4">
+                                <button type="button" id="getEmployeeOtpBtn" class="btn btn-ghost" onclick="requestSignupOtp('employee')" style="flex:0 0 100px;">Get OTP</button>
                             </div>
-                            <div id="otpTimerEmployee"
-                                style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
-                                Expires in <span id="otpCountEmployee"
-                                    style="color:var(--primary-accent); font-weight:600;">05:00</span>
+                            <div id="otpTimerEmployee" style="font-size:11px; color:var(--text-muted); text-align:right; margin-top:4px; display:none">
+                                Expires in <span id="otpCountEmployee" style="color:var(--primary-accent); font-weight:600;">05:00</span>
                             </div>
-                        </div>
-
-                        <div
-                            style="font-size:12px; font-weight:600; color:var(--text-primary); margin:12px 0 6px 0; border-top:1px solid var(--border-subtle); padding-top:10px;">
-                            Step 2: Profile Details
                         </div>
                         <div class="form-group">
                             <label>Full Name</label>
                             <input name="full_name" type="text" placeholder="John Doe">
                         </div>
                         <div class="form-group">
-                            <label>Your Work Email</label>
-                            <input name="employee_email_signup" id="employeeEmail" type="email"
-                                placeholder="john@company.com">
+                            <label>Your Personal Work Email</label>
+                            <input name="employee_email_signup" id="employeeEmail" type="email" placeholder="john@company.com">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -239,22 +333,19 @@
                                 <input name="employee_password_signup" type="password" placeholder="Create password">
                             </div>
                             <div class="form-group">
-                                <label>Role / Designation</label>
-                                <input name="role" type="text" placeholder="e.g. Lead Engineer">
+                                <label>Role / Title</label>
+                                <input name="role" type="text" placeholder="e.g. Senior Developer">
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary"
-                        style="width:100%; padding:10px; margin-top:8px;">Create Enterprise Account</button>
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:11px; margin-top:6px; font-weight:600;">Create Account</button>
                 </form>
             </div>
 
             <!-- Forgot Password Panel -->
-            <div id="forgot-panel"
-                style="display:none; margin-top:16px; padding:14px; background:#FAFBFD; border-radius:8px; border:1px solid var(--border-color);">
-                <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">Reset
-                    Password</div>
+            <div id="forgot-panel" style="display:none; margin-top:16px; padding:14px; background:#FAFBFD; border-radius:8px; border:1px solid var(--border-color);">
+                <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">Reset Password</div>
                 <form method="POST" action="{% url 'forgot_password' %}">
                     {% csrf_token %}
                     <div class="form-group" style="margin-bottom:8px;">
@@ -267,6 +358,23 @@
     </div>
 
     <script>
+        function togglePasswordVisibility(inputId, toggleElem) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggleElem.style.color = 'var(--primary-accent)';
+            } else {
+                input.type = 'password';
+                toggleElem.style.color = 'var(--text-muted)';
+            }
+        }
+
+        function switchMode(modeName) {
+            const btn = document.querySelector(`.mode-btn[data-mode="${modeName}"]`);
+            if (btn) btn.click();
+        }
+
         const btns = document.querySelectorAll('.mode-btn');
         const panels = document.querySelectorAll('.modePanel');
 
@@ -298,27 +406,6 @@
         if (signupKind) {
             signupKind.addEventListener('change', updateSignup);
             updateSignup();
-        }
-
-        const signupForm = document.getElementById('signupForm');
-        if (signupForm) {
-            signupForm.addEventListener('submit', function (e) {
-                const free = document.getElementById('companyFree').value.trim();
-                if (free && document.getElementById('employeeFields').style.display !== 'none') {
-                    const existing = document.querySelector('input[name="company_email"].hidden-override');
-                    if (existing) existing.remove();
-                    const inp = document.createElement('input');
-                    inp.type = 'hidden';
-                    inp.name = 'company_email';
-                    inp.value = free;
-                    inp.classList.add('hidden-override');
-                    this.appendChild(inp);
-                    document.getElementById('companySelect').value = '';
-                    document.getElementById('companySelect').removeAttribute('name');
-                } else {
-                    document.getElementById('companySelect').setAttribute('name', 'company_email');
-                }
-            });
         }
 
         const forgotLink = document.getElementById('forgotLink');
@@ -354,7 +441,7 @@
                 targetEmail = (free.value || sel.value || '').trim();
 
                 if (!targetEmail || !targetEmail.includes('@')) {
-                    alert('Please select or enter a Company Email first (to send OTP for verification)');
+                    alert('Please select or enter a Company Email first');
                     return;
                 }
             }

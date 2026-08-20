@@ -110,65 +110,13 @@
         <div class="erp-3d-shape erp-3d-mesh"></div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <a href="/dashboard/" class="brand-block">
-            <div class="brand-logo">TN</div>
-            <div class="brand-text">
-                <span class="brand-name">TeamNext</span>
-                <span class="brand-sub">Enterprise ERP</span>
-            </div>
-        </a>
-
-        <div class="user-block">
-            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
-            <div class="user-info">
-                <span class="user-name">{{ email }}</span>
-                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
-            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
-            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
-
-            <div class="nav-section-label">Operations</div>
-            <a href="/projects-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
-            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
-            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
-            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
-
-            <div class="nav-section-label">Finance</div>
-            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
-
-            <div class="nav-section-label">Collaboration</div>
-            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
-            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
-            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
-
-            <div class="nav-section-label">System</div>
-            {% if is_company_admin %}
-            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
-            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
-            {% endif %}
-            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
-        </nav>
-    </aside>
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    {% include "components/sidebar.html" with active_page="departments" %}
 
     <!-- Main Content -->
     <div class="main-wrapper">
-        <div class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb-root">TeamNext</span>
-                <span class="breadcrumb-sep">/</span>
-                <span class="page-title">Departments & Projects</span>
-            </div>
-            <div class="topbar-right">
-                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
-            </div>
-        </div>
+        <!-- Reusable Top Navigation Bar -->
+        {% include "components/topbar.html" with page_title="Departments" action_label="+ Create Project" action_onclick="document.getElementById('p-name') ? document.getElementById('p-name').focus() : null" %}
 
         <main class="content-area">
             {% if is_admin %}
@@ -176,18 +124,35 @@
             <div class="grid-2">
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title">Create Department</span>
+                        <span class="panel-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                <line x1="12" y1="11" x2="12" y2="17"></line>
+                                <line x1="9" y1="14" x2="15" y2="14"></line>
+                            </svg>
+                            <span>Create Department</span>
+                        </span>
                     </div>
                     <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
                         <input id="newDeptName" placeholder="Department Name (e.g. Engineering, Sales)">
                         <textarea id="newDeptDesc" placeholder="Department charter / summary" rows="2"></textarea>
-                        <button class="btn btn-primary" onclick="createDepartment()">Add Department</button>
+                        <button class="btn btn-primary" onclick="createDepartment()" style="display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Add Department</span>
+                        </button>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title">Launch Project</span>
+                        <span class="panel-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                                <polyline points="2 17 12 22 22 17"></polyline>
+                                <polyline points="2 12 12 17 22 12"></polyline>
+                            </svg>
+                            <span>Launch Project</span>
+                        </span>
                     </div>
                     <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
                         <input id="newProjName" placeholder="Project Name">
@@ -196,7 +161,10 @@
                             <label style="font-size: 11px; margin-bottom: 4px;">Assign to Departments:</label>
                             <div id="deptPicker" class="multi-select"></div>
                         </div>
-                        <button class="btn btn-primary" onclick="createProject()">Launch Project</button>
+                        <button class="btn btn-primary" onclick="createProject()" style="display: inline-flex; align-items: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Launch Project</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -205,7 +173,13 @@
             <!-- Structure Grid -->
             <div class="panel">
                 <div class="panel-header">
-                    <span class="panel-title">Organizational Structure & Active Projects</span>
+                    <span class="panel-title">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        <span>Organizational Structure & Active Projects</span>
+                    </span>
                 </div>
                 <div class="panel-body">
                     <div id="contentGrid" class="dept-grid">

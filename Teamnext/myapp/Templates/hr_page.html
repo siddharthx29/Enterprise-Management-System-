@@ -29,65 +29,13 @@
         <div class="erp-3d-shape erp-3d-mesh"></div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <a href="/dashboard/" class="brand-block">
-            <div class="brand-logo">TN</div>
-            <div class="brand-text">
-                <span class="brand-name">TeamNext</span>
-                <span class="brand-sub">Enterprise ERP</span>
-            </div>
-        </a>
-
-        <div class="user-block">
-            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
-            <div class="user-info">
-                <span class="user-name">{{ email }}</span>
-                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
-            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
-            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
-
-            <div class="nav-section-label">Operations</div>
-            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
-            <a href="/hr-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
-            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
-            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
-
-            <div class="nav-section-label">Finance</div>
-            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
-
-            <div class="nav-section-label">Collaboration</div>
-            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
-            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
-            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
-
-            <div class="nav-section-label">System</div>
-            {% if is_company_admin %}
-            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
-            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
-            {% endif %}
-            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
-        </nav>
-    </aside>
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    {% include "components/sidebar.html" with active_page="hr" %}
 
     <!-- Main Content -->
     <div class="main-wrapper">
-        <div class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb-root">TeamNext</span>
-                <span class="breadcrumb-sep">/</span>
-                <span class="page-title">HR Management</span>
-            </div>
-            <div class="topbar-right">
-                <button class="btn btn-primary btn-sm" onclick="openAddEmployeeModal()">+ Add Employee</button>
-            </div>
-        </div>
+        <!-- Reusable Top Navigation Bar -->
+        {% include "components/topbar.html" with page_title="HR Management" action_label="+ Add Employee" action_onclick="openAddEmployeeModal()" %}
 
         <main class="content-area">
             <!-- Stat Cards -->
@@ -112,9 +60,31 @@
             <!-- Main Panel with Tabs -->
             <div class="panel">
                 <div class="tabs">
-                    <button class="tab active" onclick="switchTab('employees')">Employee Directory</button>
-                    <button class="tab" onclick="switchTab('attendance')">Attendance Tracker</button>
-                    <button class="tab" onclick="switchTab('records')">Historical Records</button>
+                    <button class="tab active" onclick="switchTab('employees')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Employee Directory</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('attendance')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Attendance Tracker</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('records')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span>Historical Records</span>
+                    </button>
                 </div>
 
                 <!-- Tab 1: Employees Directory -->

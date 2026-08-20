@@ -5,10 +5,10 @@
 <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-JETS327R52');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-JETS327R52');
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,65 +44,15 @@
         <div class="erp-3d-shape erp-3d-mesh"></div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <a href="/dashboard/" class="brand-block">
-            <div class="brand-logo">TN</div>
-            <div class="brand-text">
-                <span class="brand-name">TeamNext</span>
-                <span class="brand-sub">Enterprise ERP</span>
-            </div>
-        </a>
-
-        <div class="user-block">
-            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
-            <div class="user-info">
-                <span class="user-name">{{ email }}</span>
-                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
-            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
-            <a href="/reports-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
-
-            <div class="nav-section-label">Operations</div>
-            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
-            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
-            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
-            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
-
-            <div class="nav-section-label">Finance</div>
-            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
-
-            <div class="nav-section-label">Collaboration</div>
-            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
-            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
-            <a href="/tickets-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
-
-            <div class="nav-section-label">System</div>
-            {% if is_company_admin %}
-            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
-            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
-            {% endif %}
-            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
-        </nav>
-    </aside>
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    {% include "components/sidebar.html" with active_page="tickets" %}
 
     <!-- Main Content -->
     <div class="main-wrapper">
-        <div class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb-root">TeamNext</span>
-                <span class="breadcrumb-sep">/</span>
-                <span class="page-title">Support & Issue Tickets</span>
-            </div>
-            <div class="topbar-right">
-                <div style="font-size: 12px; color: var(--text-muted);">{{ company_name }}</div>
-            </div>
-        </div>
+        <!-- Reusable Top Navigation Bar -->
+        {% include "components/topbar.html" with page_title="Tickets" action_label="+ New Ticket"
+        action_onclick="document.getElementById('ticketTitleInput') ?
+        document.getElementById('ticketTitleInput').focus() : null" %}
 
         <main class="content-area">
             <!-- Analytics Stat Cards -->
@@ -130,7 +80,14 @@
                     <!-- Create Ticket Panel -->
                     <div class="panel">
                         <div class="panel-header">
-                            <span class="panel-title">Raise New Ticket</span>
+                            <span class="panel-title">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path>
+                                    <line x1="12" y1="9" x2="12" y2="15"></line>
+                                    <line x1="9" y1="12" x2="15" y2="12"></line>
+                                </svg>
+                                <span>Raise New Ticket</span>
+                            </span>
                         </div>
                         <div class="panel-body" style="display: flex; flex-direction: column; gap: 10px;">
                             <div class="form-row">
@@ -159,7 +116,8 @@
 
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label>Description</label>
-                                <textarea id="tDesc" rows="4" placeholder="Steps to reproduce, error details..."></textarea>
+                                <textarea id="tDesc" rows="4"
+                                    placeholder="Steps to reproduce, error details..."></textarea>
                             </div>
 
                             <div class="form-group" style="margin-bottom: 0;">
@@ -172,7 +130,13 @@
                                 </select>
                             </div>
 
-                            <button id="createBtn" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Create Ticket</button>
+                            <button id="createBtn" class="btn btn-primary" style="width: 100%; margin-top: 4px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Create Ticket</span>
+                            </button>
                             <div id="status" style="font-size: 11px; text-align: center; min-height: 14px;"></div>
                         </div>
                     </div>
@@ -180,7 +144,15 @@
                     <!-- Add Developer Panel -->
                     <div class="panel">
                         <div class="panel-header">
-                            <span class="panel-title">Developer Quick Onboarding (OTP)</span>
+                            <span class="panel-title">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <line x1="19" y1="8" x2="19" y2="14"></line>
+                                    <line x1="16" y1="11" x2="22" y2="11"></line>
+                                </svg>
+                                <span>Developer Quick Onboarding</span>
+                            </span>
                         </div>
                         <div class="panel-body" style="display: flex; flex-direction: column; gap: 8px;">
                             <input id="devName" placeholder="Developer Full Name">
@@ -198,25 +170,43 @@
                 <!-- Right: Recent Tickets Roster -->
                 <div class="panel">
                     <div class="panel-header">
-                        <span class="panel-title">Ticket Registry</span>
+                        <span class="panel-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="8" y1="6" x2="21" y2="6"></line>
+                                <line x1="8" y1="12" x2="21" y2="12"></line>
+                                <line x1="8" y1="18" x2="21" y2="18"></line>
+                                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                            </svg>
+                            <span>Ticket Registry</span>
+                        </span>
                     </div>
                     <div class="panel-body" style="max-height: calc(100vh - 240px); overflow-y: auto;">
                         {% if recent %}
                         {% for t in recent %}
-                        <div class="ticket-card" style="border-left: 3px solid {% if t.priority == 'high' %}var(--danger-red){% elif t.priority == 'medium' %}var(--warning-amber){% else %}var(--info-blue){% endif %};">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-                                <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">{{ t.title }}</span>
-                                <span class="badge {% if t.priority == 'high' %}badge-red{% elif t.priority == 'medium' %}badge-amber{% else %}badge-blue{% endif %}">
+                        <div class="ticket-card"
+                            style="border-left: 3px solid {% if t.priority == 'high' %}var(--danger-red){% elif t.priority == 'medium' %}var(--warning-amber){% else %}var(--info-blue){% endif %};">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+                                <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">{{ t.title
+                                    }}</span>
+                                <span
+                                    class="badge {% if t.priority == 'high' %}badge-red{% elif t.priority == 'medium' %}badge-amber{% else %}badge-blue{% endif %}">
                                     {{ t.priority|upper }}
                                 </span>
                             </div>
 
                             <div class="grid-2" style="margin-bottom: 6px; font-size: 11px; color: var(--text-muted);">
-                                <div>Project: <strong style="color: var(--text-primary);">{{ t.project.name }}</strong></div>
-                                <div>Assignee: <strong style="color: {% if t.employee %}var(--success-green){% else %}var(--warning-amber){% endif %};">{{ t.employee.name|default:"Unassigned" }}</strong></div>
+                                <div>Project: <strong style="color: var(--text-primary);">{{ t.project.name }}</strong>
+                                </div>
+                                <div>Assignee: <strong
+                                        style="color: {% if t.employee %}var(--success-green){% else %}var(--warning-amber){% endif %};">{{
+                                        t.employee.name|default:"Unassigned" }}</strong></div>
                             </div>
 
-                            <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; border-top: 1px solid var(--border-subtle); padding-top: 6px; margin-top: 6px;">
+                            <div
+                                style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; border-top: 1px solid var(--border-subtle); padding-top: 6px; margin-top: 6px;">
                                 {{ t.description|truncatewords:28 }}
                             </div>
 

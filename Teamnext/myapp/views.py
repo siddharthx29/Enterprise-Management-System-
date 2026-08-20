@@ -1,4 +1,4 @@
-import random
+import secrets
 import time
 
 from datetime import timedelta, datetime
@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Sum, Count, Avg, F
 from django.utils import timezone
+from django.contrib.auth.hashers import make_password, check_password, identify_hasher
 
 from .brevo_helper import send_brevo_email
 from .models import (
@@ -19,6 +20,34 @@ from .models import (
     Invoice, Expense, Payroll, VendorPayment, BankTransaction,
     InventoryItem, Attendance
 )
+
+
+def generate_secure_otp():
+    """Generates a cryptographically secure 4-digit numeric OTP"""
+    return str(secrets.SystemRandom().randint(1000, 9999))
+
+
+def verify_and_upgrade_password(user_obj, raw_password):
+    """
+    Verifies user password with secure PBKDF2 hash or legacy plaintext fallback.
+    Upgrades legacy plaintext to secure PBKDF2 hash immediately upon successful validation.
+    """
+    if not user_obj or not user_obj.password or not raw_password:
+        return False
+
+    try:
+        # Check if stored password is a valid Django hasher format
+        identify_hasher(user_obj.password)
+        return check_password(raw_password, user_obj.password)
+    except Exception:
+        # Fallback to legacy plaintext verification
+        if user_obj.password == raw_password:
+            # Upgrade stored password to secure PBKDF2 hash immediately
+            user_obj.password = make_password(raw_password)
+            user_obj.save(update_fields=['password'])
+            return True
+        return False
+
 
 
 def ads_txt(request):
@@ -90,10 +119,11 @@ def send_otp(request):
                 messages.error(request, 'None of these emails are registered.')
                 return redirect('login')
 
-        otp = str(random.randint(1000, 9999))
+        otp = generate_secure_otp()
         request.session["otp"] = otp
         request.session["otp_email"] = email_list[0] if email_list else email_input
-        request.session["otp_expiry"] = time.time() + 300 # Increased to 5 mins
+        request.session["otp_expiry"] = time.time() + 300 # 5 mins
+        request.session["otp_attempts"] = 0
 
         if purpose:
 
@@ -182,7 +212,7 @@ def api_send_otp_json(request):
 
         verification_email = target_email if target_email else email
 
-        otp = str(random.randint(1000, 9999))
+        otp = generate_secure_otp()
 
         request.session["otp"] = otp
 
@@ -191,6 +221,8 @@ def api_send_otp_json(request):
         request.session["otp_expiry"] = time.time() + 300
 
         request.session["otp_action"] = 'signup'
+
+        request.session["otp_attempts"] = 0
 
         if target_email != email:
 
@@ -233,90 +265,78 @@ def api_send_otp_json(request):
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 def verify_otp(request):
-
     if request.method != "POST":
-
         return redirect("login")
 
-    user_otp = request.POST.get("otp")
-
+    user_otp = (request.POST.get("otp") or "").strip()
     saved_otp = request.session.get("otp")
-
     expiry = request.session.get("otp_expiry")
 
     if not saved_otp or not expiry:
-        print(f"DEBUG: verify_otp session check failed. saved_otp: {saved_otp}, expiry: {expiry}")
         messages.error(request, "Session expired or invalid. Please login again.")
         return redirect("login")
 
+    # Brute force protection: maximum 5 attempts per OTP
+    attempts = request.session.get("otp_attempts", 0) + 1
+    request.session["otp_attempts"] = attempts
+
+    if attempts > 5:
+        request.session.pop("otp", None)
+        request.session.pop("otp_expiry", None)
+        request.session.pop("otp_attempts", None)
+        messages.error(request, "Too many failed attempts. Please login again to request a new code.")
+        return redirect("login")
+
     if time.time() > expiry:
-
+        request.session.pop("otp", None)
+        request.session.pop("otp_expiry", None)
         messages.error(request, "OTP expired. Please request a new one.")
-
         return redirect("otp")
 
     if user_otp == saved_otp:
-
         action = request.session.get('otp_action')
+        email = (request.session.get("otp_email") or '').strip().lower()
+
+        # Invalidate OTP immediately upon successful verification
+        request.session.pop('otp', None)
+        request.session.pop('otp_expiry', None)
+        request.session.pop('otp_attempts', None)
+        request.session.pop('otp_action', None)
 
         if action == 'signup':
-
             messages.error(request, "Please use the signup form to complete registration.")
-
             return redirect("login")
 
         elif action == 'password_reset':
-
-            request.session['password_reset_email'] = request.session.get('otp_email')
-
-            request.session.pop('otp', None)
-
-            request.session.pop('otp_action', None)
-
-            request.session.pop('otp_expiry', None)
-
+            request.session['password_reset_allowed'] = True
+            request.session['password_reset_email'] = email
             return redirect('set_password')
 
         request.session["verified"] = True
-
-        email = (request.session.get("otp_email") or '').strip().lower()
-
         name = email
-
         company_name = "TeamNext"
 
         co = Company.objects.filter(email__iexact=email).first()
-
         if co:
-
             name = co.name
-
             company_name = co.name
-
         else:
-
             emp = Employee.objects.filter(email__iexact=email).first()
-
             if emp:
-
                 name = emp.name
-
                 company_name = emp.company.name
 
         request.session['company_name'] = company_name
-
         messages.success(request, f"Welcome back, {name}!")
-
         return redirect("dashboard")
 
     else:
-
-        # Invalid OTP — automatically generate and send a new one
+        # Invalid OTP — generate and send new OTP if within resend limit
         email = request.session.get("otp_email")
         count = request.session.get("resend_count", 0)
 
         if email and count < 3:
-            new_otp = str(random.randint(1000, 9999))
+            new_otp = generate_secure_otp()
             request.session["otp"] = new_otp
             request.session["otp_expiry"] = time.time() + 300
             request.session["resend_count"] = count + 1
@@ -340,7 +360,7 @@ def verify_otp(request):
                 )
                 messages.error(request, f"Invalid OTP. A new code has been sent to {email}.")
             except Exception:
-                messages.error(request, "Invalid OTP. Failed to send new code — please resend manually.")
+                messages.error(request, "Invalid OTP. Please try again.")
         elif email and count >= 3:
             messages.error(request, "Invalid OTP. Max resend limit reached. Please login again.")
             return redirect("login")
@@ -354,27 +374,19 @@ def resend_otp(request):
         return redirect("otp")
 
     email = request.session.get("otp_email")
-
     if not email:
-
         messages.error(request, "Please login first to resend OTP.")
-
         return redirect("login")
 
     count = request.session.get("resend_count", 0)
-
     if count >= 3:
-
         messages.error(request, "Max resend limit reached. Please login again.")
-
         return redirect("login")
 
-    otp = str(random.randint(1000, 9999))
-
+    otp = generate_secure_otp()
     request.session["otp"] = otp
-
     request.session["otp_expiry"] = time.time() + 300
-
+    request.session["otp_attempts"] = 0
     request.session["resend_count"] = count + 1
 
     try:
@@ -397,59 +409,38 @@ def resend_otp(request):
         )
         messages.success(request, f"New OTP sent to {email} ({count+1}/3)")
     except Exception as e:
-        print(f"RESEND OTP ERROR: {str(e)}")
-        messages.error(request, f"Failed to resend OTP: {str(e)}")
+        messages.error(request, "Failed to resend OTP. Please try again.")
 
     return redirect("otp")
 
-@csrf_exempt
-
 def password_login(request):
-
     if request.method != 'POST':
-
         return redirect('login')
 
     email = (request.POST.get('email') or '').strip().lower()
-
     password = request.POST.get('password')
 
     if not email or not password:
-
         messages.error(request, 'Email and password required')
-
         return redirect('login')
 
-    co = Company.objects.filter(email__iexact=email, password=password).first()
-
-    if co:
-
+    co = Company.objects.filter(email__iexact=email).first()
+    if co and verify_and_upgrade_password(co, password):
         request.session['verified'] = True
-
         request.session['otp_email'] = email
-
         request.session['company_name'] = co.name
-
         messages.success(request, 'Company login successful')
-
         return redirect('dashboard')
 
-    emp = Employee.objects.filter(email__iexact=email, password=password).first()
-
-    if emp:
-
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if emp and verify_and_upgrade_password(emp, password):
         request.session['verified'] = True
-
         request.session['otp_email'] = email
-
         request.session['company_name'] = emp.company.name
-
         messages.success(request, 'Employee login successful')
-
         return redirect('dashboard')
 
-    messages.error(request, 'Invalid credentials')
-
+    messages.error(request, 'Invalid email or password')
     return redirect('login')
 
 @csrf_exempt
@@ -489,108 +480,75 @@ def signup_view(request):
                 return redirect('login')
 
             co = Company.objects.create(
-
                 name=company_name,
-
                 email=email,
-
-                password=password,
-
+                password=make_password(password),
                 address=request.POST.get('address'),
-
                 phone=request.POST.get('phone'),
-
                 website=request.POST.get('website'),
-
                 employees_count=request.POST.get('employees_count'),
-
                 industry=request.POST.get('industry')
-
             )
 
             request.session['verified'] = True
-
             request.session['otp_email'] = email
-
             request.session['company_name'] = co.name
-
             request.session.pop('otp', None)
 
             messages.success(request, 'Workspace registered successfully!')
-
             return redirect('dashboard')
 
         elif kind == 'employee':
-
             email = (request.POST.get('employee_email_signup') or '').strip().lower()
-
             company_email = (request.POST.get('company_email') or '').strip().lower()
 
             try:
-
                 company = Company.objects.get(email=company_email)
-
             except Company.DoesNotExist:
-
                 messages.error(request, 'Company email does not exist.')
-
                 return redirect('login')
 
             if Company.objects.filter(email=email).exists() or Employee.objects.filter(email=email).exists():
-
                 messages.error(request, 'Account already exists.')
-
                 return redirect('login')
 
             otp_input = request.POST.get('employee_otp_signup')
-
             if otp_input != request.session.get('otp') or company_email != request.session.get('otp_email'):
-
                 messages.error(request, 'Invalid OTP.')
-
                 return redirect('login')
 
+            emp_pwd = request.POST.get('employee_password_signup') or 'changeme123'
             emp = Employee.objects.create(
                 company=company,
                 name=request.POST.get('full_name'),
                 email=email,
-                password=request.POST.get('employee_password_signup'),
+                password=make_password(emp_pwd),
                 role=request.POST.get('role'),
                 department_old=request.POST.get('department'),
                 phone=request.POST.get('phone')
             )
 
             request.session['verified'] = True
-
             request.session['otp_email'] = email
-
             request.session['company_name'] = company.name
-
             request.session.pop('otp', None)
 
             messages.success(request, 'Employee registered successfully!')
-
             return redirect('dashboard')
 
         else:
-
              messages.error(request, 'Invalid signup kind')
-
              return redirect('login')
 
     return render(request, "login.html")
 
 def _send_signup_otp(request, email):
-
-    otp = str(random.randint(1000, 9999))
-
+    otp = generate_secure_otp()
     request.session["otp"] = otp
-
     request.session["otp_email"] = email
-
     request.session["otp_expiry"] = time.time() + 300
-
     request.session["otp_action"] = 'signup'
+    request.session["otp_attempts"] = 0
 
     html_signup = f"""
         <div style='font-family: Arial, sans-serif; padding: 30px; border-radius: 8px; background-color: #f9fafb; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb;'>
@@ -611,65 +569,48 @@ def _send_signup_otp(request, email):
     messages.success(request, f"Verification OTP sent to {email}")
 
 def set_password(request):
-
     if request.method == 'POST':
-
         pwd = request.POST.get('password')
-
         email = request.session.get('password_reset_email') or request.session.get('otp_email')
 
+        # Verify authorization: must have completed verified OTP reset or be logged in
+        if not request.session.get('password_reset_allowed') and not request.session.get('verified'):
+            messages.error(request, 'Unauthorized password reset session. Please verify OTP first.')
+            return redirect('login')
+
         if not pwd or not email:
-
-            messages.error(request, 'Missing info')
-
+            messages.error(request, 'Missing required information')
             return redirect('login')
 
         email = (email or '').strip().lower()
-
         co = Company.objects.filter(email__iexact=email).first()
 
         if co:
-
-            co.password = pwd
-
-            co.save()
-
+            co.password = make_password(pwd)
+            co.save(update_fields=['password'])
         else:
-
             emp = Employee.objects.filter(email__iexact=email).first()
-
             if emp:
-
-                emp.password = pwd
-
-                emp.save()
-
+                emp.password = make_password(pwd)
+                emp.save(update_fields=['password'])
             else:
-
-                messages.error(request, 'User not found.')
-
+                messages.error(request, 'User account not found.')
                 return redirect('login')
 
         request.session.pop('password_reset_email', None)
-
+        request.session.pop('password_reset_allowed', None)
         request.session['verified'] = True
 
         company_name = "TeamNext"
-
         if co:
-
             company_name = co.name
-
         elif emp:
-
             company_name = emp.company.name
 
         request.session['company_name'] = company_name
-
         request.session['otp_email'] = email
 
-        messages.success(request, 'Password set. Logged in.')
-
+        messages.success(request, 'Password securely updated. Logged in.')
         return redirect('dashboard')
 
     return render(request, 'set_password.html')
@@ -1004,21 +945,13 @@ def leaves_page(request):
         is_admin = ProjectMember.objects.filter(employee=emp, can_approve_leaves=True).exists()
 
     if co:
-
-        leaves_qs = LeaveRequest.objects.filter(employee__company=co)
-
+        leaves_qs = LeaveRequest.objects.filter(employee__company=co).select_related('employee')
     elif emp:
-
         if is_admin:
-
-            leaves_qs = LeaveRequest.objects.filter(employee__company=emp.company)
-
+            leaves_qs = LeaveRequest.objects.filter(employee__company=emp.company).select_related('employee')
         else:
-
-            leaves_qs = LeaveRequest.objects.filter(employee=emp)
-
+            leaves_qs = LeaveRequest.objects.filter(employee=emp).select_related('employee')
     else:
-
         leaves_qs = LeaveRequest.objects.none()
 
     resolved = []
@@ -1243,16 +1176,11 @@ def tickets_page(request):
         return redirect('login')
 
     if is_admin:
-
         projects_list = Project.objects.filter(company=co)
-
-        tickets_list = Ticket.objects.filter(project__company=co)
-
+        tickets_list = Ticket.objects.filter(project__company=co).select_related('project', 'employee')
     else:
-
         projects_list = Project.objects.filter(members__employee=emp)
-
-        tickets_list = Ticket.objects.filter(project__in=projects_list)
+        tickets_list = Ticket.objects.filter(project__in=projects_list).select_related('project', 'employee')
 
     devs_qs = Employee.objects.filter(company=co)
 
@@ -1942,16 +1870,11 @@ def projects_page(request):
         co = emp.company if emp else None
 
         if emp:
-
-            projects_qs = Project.objects.filter(members__employee=emp)
-
+            projects_qs = Project.objects.filter(members__employee=emp).prefetch_related('departments', 'members__employee')
         else:
-
             projects_qs = Project.objects.none()
-
     else:
-
-        projects_qs = Project.objects.filter(company=co)
+        projects_qs = Project.objects.filter(company=co).prefetch_related('departments', 'members__employee')
 
     return render(request, 'projects_page.html', {
 
@@ -2774,11 +2697,12 @@ def api_hr_add_employee(request):
             department = Department.objects.filter(id=dept_id, company=co).first()
         
         # Create employee
+        raw_pwd = data.get('password') or 'changeme123'
         employee = Employee.objects.create(
             company=co,
             name=data.get('name'),
             email=data.get('email'),
-            password='changeme123',  # Default password
+            password=make_password(raw_pwd),
             role=data.get('role', 'Employee'),
             dept=department,
             phone=data.get('phone', '')

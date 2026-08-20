@@ -55,65 +55,13 @@
         <div class="erp-3d-shape erp-3d-mesh"></div>
     </div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <a href="/dashboard/" class="brand-block">
-            <div class="brand-logo">TN</div>
-            <div class="brand-text">
-                <span class="brand-name">TeamNext</span>
-                <span class="brand-sub">Enterprise ERP</span>
-            </div>
-        </a>
-
-        <div class="user-block">
-            <div class="user-avatar">{{ email|slice:":1"|upper }}</div>
-            <div class="user-info">
-                <span class="user-name">{{ email }}</span>
-                <span class="user-role">{{ company_name|default:"Corporate" }}</span>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Overview</div>
-            <a href="/dashboard/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Dashboard</span></a>
-            <a href="/analytics-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Analytics</span></a>
-            <a href="/reports-page/" class="nav-item active"><span class="nav-dot"></span><span class="nav-text">Reports</span></a>
-
-            <div class="nav-section-label">Operations</div>
-            <a href="/projects-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Departments</span></a>
-            <a href="/hr-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">HR Management</span></a>
-            <a href="/leaves-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Leaves</span></a>
-            <a href="/inventory-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Inventory</span></a>
-
-            <div class="nav-section-label">Finance</div>
-            <a href="/finance-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Finance</span></a>
-
-            <div class="nav-section-label">Collaboration</div>
-            <a href="/chat-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Communication</span></a>
-            <a href="/email-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Email Center</span></a>
-            <a href="/tickets-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Tickets</span></a>
-
-            <div class="nav-section-label">System</div>
-            {% if is_company_admin %}
-            <a href="/users-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Users & Access</span></a>
-            <a href="/settings-page/" class="nav-item"><span class="nav-dot"></span><span class="nav-text">Settings</span></a>
-            {% endif %}
-            <a href="/logout/" class="nav-item logout-item"><span class="nav-dot"></span><span class="nav-text">Logout</span></a>
-        </nav>
-    </aside>
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    {% include "components/sidebar.html" with active_page="reports" %}
 
     <!-- Main Content -->
     <div class="main-wrapper">
-        <div class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb-root">TeamNext</span>
-                <span class="breadcrumb-sep">/</span>
-                <span class="page-title">Enterprise Reports</span>
-            </div>
-            <div class="topbar-right">
-                <a href="/analytics-page/" class="btn btn-ghost btn-sm">View Analytics Dashboard</a>
-            </div>
-        </div>
+        <!-- Reusable Top Navigation Bar -->
+        {% include "components/topbar.html" with page_title="Reports Center" action_label="+ Generate Report" action_onclick="generateAllReports()" %}
 
         <main class="content-area">
             <!-- Stat Cards -->
