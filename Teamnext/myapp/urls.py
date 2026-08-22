@@ -75,6 +75,9 @@ urlpatterns = [
     path("api/send-otp-json/", views.api_send_otp_json, name="api_send_otp_json"),
 
     path("api/chat/messages/", views.chat_messages, name="api_chat_messages"),
+    path("api/chat/unlock/<str:project_id>/", views.api_unlock_channel, name="api_unlock_channel"),
+    path("api/chat/lock-settings/<str:project_id>/", views.api_channel_lock_settings, name="api_channel_lock_settings"),
+    path("api/chat/media/<int:media_id>/", views.api_chat_media, name="api_chat_media"),
 
     path("api/projects/<str:project_id>/members/", views.project_members, name="api_project_members"),
 

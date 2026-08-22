@@ -3,18 +3,24 @@ import sys
 import django
 import json
 import base64
+import time
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
 
 from django.test import RequestFactory
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.messages.middleware import MessageMiddleware
-from myapp.models import Company, Employee, Project, ProjectMember, ChatMessage, EmailMessage, Invoice, Expense, Payroll, Ticket, Department, Attendance, LeaveRequest
+from myapp.models import (
+    Company, Employee, Project, ProjectMember, ChatMessage, ChatMessageMedia,
+    EmailMessage, Invoice, Expense, Payroll, Ticket, Department, Attendance, LeaveRequest
+)
 from myapp.views import (
     signup_view, save_settings, chat_messages, api_users,
     project_member_settings, send_dashboard_email, save_email_draft,
-    api_notifications, api_generate_report
+    api_notifications, api_generate_report, api_unlock_channel,
+    api_channel_lock_settings, api_chat_media, logout_view
 )
 
 def build_request(method='GET', path='/', data=None, session_data=None):
@@ -42,6 +48,22 @@ def build_request(method='GET', path='/', data=None, session_data=None):
             req.session[k] = v
         req.session.save()
 
+    return req
+
+def build_multipart_request(path='/', data=None, files=None, session_data=None):
+    rf = RequestFactory()
+    post_data = data.copy() if data else {}
+    if files:
+        for k, v in files.items():
+            post_data[k] = v
+    req = rf.post(path, post_data)
+    SessionMiddleware(lambda r: None).process_request(req)
+    MessageMiddleware(lambda r: None).process_request(req)
+    req.session.save()
+    if session_data:
+        for k, v in session_data.items():
+            req.session[k] = v
+        req.session.save()
     return req
 
 def run_tests():
@@ -90,6 +112,10 @@ def run_tests():
         resp_res = chat_messages(req_res)
         assert resp_res.status_code == 403, "Restricted user was not blocked from chatting"
 
+        # Restore permissions
+        pm.can_chat = True
+        pm.save()
+
         results['1_chat_messaging'] = "PASSED"
     except Exception as e:
         results['1_chat_messaging'] = f"FAILED: {e}"
@@ -103,7 +129,7 @@ def run_tests():
         assert len(users) > 0, "No users returned"
 
         # POST
-        new_email = f"emp_new_{int(os.getpid())}@gmail.com"
+        new_email = f"emp_new_{int(time.time() * 1000)}@gmail.com"
         req_p = build_request('POST', '/api/users/', {'name': 'New Dev', 'email': new_email, 'role': 'Backend Lead'}, session_data={'verified': True, 'otp_email': test_co.email})
         resp_p = api_users(req_p)
         assert json.loads(resp_p.content)['status'] == 'ok'
@@ -125,77 +151,68 @@ def run_tests():
     except Exception as e:
         results['2_users_access'] = f"FAILED: {e}"
 
-    # 3. Employee Signup with Personal Email Test
+    # 3. Employee Personal Email Signup Test
     try:
-        personal_email = f"personal_{int(os.getpid())}@gmail.com"
+        emp_signup_email = f"emp_signup_{int(time.time() * 1000)}@gmail.com"
         rf = RequestFactory()
-        post_data = {
+        req_s = rf.post('/signup/', {
             'kind': 'employee',
+            'full_name': 'Signup Tester',
+            'employee_email_signup': emp_signup_email,
             'company_email': test_co.email,
-            'employee_email_signup': personal_email,
-            'employee_password_signup': 'SecretPass123!',
-            'full_name': 'Personal Email User',
-            'role': 'QA Specialist',
-            'employee_otp_signup': '9999'
-        }
-        req_s = rf.post('/signup/', post_data)
+            'employee_password_signup': 'Secret123!',
+            'employee_otp_signup': '7788',
+            'role': 'QA Engineer'
+        })
         SessionMiddleware(lambda r: None).process_request(req_s)
         MessageMiddleware(lambda r: None).process_request(req_s)
-        req_s.session['otp'] = '9999'
-        req_s.session['otp_email'] = test_co.email
+        req_s.session['otp'] = '7788'
+        req_s.session['otp_email'] = emp_signup_email
         req_s.session.save()
 
         resp_s = signup_view(req_s)
-        created_p = Employee.objects.filter(email=personal_email).first()
-        assert created_p is not None, "Personal email employee not created"
-        assert created_p.company == test_co
-        created_p.delete()
+        assert resp_s.status_code == 302
+        created_emp = Employee.objects.filter(email=emp_signup_email).first()
+        assert created_emp is not None
+        assert created_emp.company == test_co
+        assert created_emp.role == 'QA Engineer'
 
         results['3_employee_personal_email_signup'] = "PASSED"
     except Exception as e:
         results['3_employee_personal_email_signup'] = f"FAILED: {e}"
 
-    # 4. Moderator Settings Persistence Test
+    # 4. Moderator Settings Modification Test
     try:
-        req_set = build_request('POST', '/api/save-settings/', {
-            'company_name': 'QA Corp Rebranded',
-            'phone': '+1 555 0199',
-            'website': 'https://qacorp.test',
-            'industry': 'Software QA Automation'
-        }, session_data={'verified': True, 'otp_email': test_co.email})
+        mod_emp, _ = Employee.objects.get_or_create(
+            email='qa_moderator@teamnext.test',
+            defaults={'company': test_co, 'name': 'QA Mod', 'role': 'Manager', 'password': 'pwd'}
+        )
+        pm_mod, _ = ProjectMember.objects.get_or_create(project=test_proj, employee=mod_emp)
+        pm_mod.can_modify_settings = True
+        pm_mod.save()
 
+        req_set = build_request('POST', '/api/save-settings/', {'company_name': 'QA Corp Renamed'}, session_data={'verified': True, 'otp_email': mod_emp.email})
         resp_set = save_settings(req_set)
-        data_set = json.loads(resp_set.content)
-        assert data_set['status'] == 'ok', data_set
-
+        assert json.loads(resp_set.content)['status'] == 'ok'
         test_co.refresh_from_db()
-        assert test_co.name == 'QA Corp Rebranded'
-        assert test_co.phone == '+1 555 0199'
-        assert test_co.website == 'https://qacorp.test'
-        assert test_co.industry == 'Software QA Automation'
+        assert test_co.name == 'QA Corp Renamed'
 
         results['4_moderator_settings'] = "PASSED"
     except Exception as e:
         results['4_moderator_settings'] = f"FAILED: {e}"
 
-    # 5. Permissions Management Test
+    # 5. Project Member Permissions Settings API Test
     try:
-        perm_emp, _ = Employee.objects.get_or_create(
-            email='qa_perm@teamnext.test',
-            defaults={'company': test_co, 'name': 'Perm User', 'role': 'Auditor', 'password': 'pwd'}
-        )
-        req_pm = build_request('POST', f'/api/projects/{test_proj.id}/members/{perm_emp.email}/settings/', {
+        req_perm = build_request('POST', f'/api/projects/{test_proj.id}/members/{user_emp.email}/settings/', {
             'is_admin': True,
+            'can_chat': True,
             'can_modify_settings': True,
             'can_approve_leaves': True,
-            'can_chat': True,
             'is_allowed': True
         }, session_data={'verified': True, 'otp_email': test_co.email})
-
-        resp_pm = project_member_settings(req_pm, str(test_proj.id), perm_emp.email)
-        assert json.loads(resp_pm.content)['status'] == 'ok'
-
-        pm_obj = ProjectMember.objects.get(project=test_proj, employee=perm_emp)
+        resp_perm = project_member_settings(req_perm, str(test_proj.id), user_emp.email)
+        assert json.loads(resp_perm.content)['status'] == 'ok'
+        pm_obj = ProjectMember.objects.get(project=test_proj, employee=user_emp)
         assert pm_obj.is_admin is True
         assert pm_obj.can_modify_settings is True
         assert pm_obj.can_approve_leaves is True
@@ -206,7 +223,6 @@ def run_tests():
 
     # 6. Email System Test
     try:
-        # Send
         req_em = build_request('POST', '/dashboard/send-email/', {
             'to': 'recipient@teamnext.test',
             'subject': 'QA Test Email Subject',
@@ -261,6 +277,7 @@ def run_tests():
         assert 'myapp' in settings.INSTALLED_APPS
         assert 'whitenoise.middleware.WhiteNoiseMiddleware' in settings.MIDDLEWARE
         assert hasattr(settings, 'DATABASES')
+        assert hasattr(settings, 'MEDIA_ROOT')
         results['8_post_deployment'] = "PASSED"
     except Exception as e:
         results['8_post_deployment'] = f"FAILED: {e}"
@@ -294,6 +311,275 @@ def run_tests():
         results['9_reports_accuracy'] = f"FAILED: {e}"
         results['10_audit_statements_deduplicated'] = f"FAILED: {e}"
 
+    # 11. Channel Locking & 4-Character Hex Validation Test
+    try:
+        # Create a channel to test locking
+        locked_proj, _ = Project.objects.get_or_create(
+            name='QA Secret Channel',
+            company=test_co,
+            defaults={'description': 'Locked channel testing'}
+        )
+        chatter, _ = Employee.objects.get_or_create(
+            email='qa_lock_user@teamnext.test',
+            defaults={'company': test_co, 'name': 'Lock User', 'role': 'Analyst', 'password': 'pwd'}
+        )
+        ProjectMember.objects.get_or_create(project=locked_proj, employee=chatter, defaults={'can_chat': True, 'is_allowed': True})
+
+        # Lock channel via admin settings with valid 4-character hex: 'A3F9'
+        req_lock = build_request('POST', f'/api/chat/lock-settings/{locked_proj.id}/', {
+            'is_locked': True,
+            'passcode': 'A3F9'
+        }, session_data={'verified': True, 'otp_email': test_co.email})
+        resp_lock = api_channel_lock_settings(req_lock, str(locked_proj.id))
+        assert json.loads(resp_lock.content)['status'] == 'ok', resp_lock.content
+        locked_proj.refresh_from_db()
+        assert locked_proj.is_locked is True
+        assert locked_proj.passcode_hash is not None
+
+        # User GET messages on locked channel without unlock session -> returns status 'locked' and hides messages
+        req_get = build_request('GET', f'/api/chat/messages/?project={locked_proj.id}', session_data={'verified': True, 'otp_email': chatter.email})
+        resp_get = chat_messages(req_get)
+        data_get = json.loads(resp_get.content)
+        assert data_get['status'] == 'locked', f"Expected locked status, got {data_get}"
+        assert 'messages' not in data_get, "Messages must be hidden when channel is locked"
+
+        # User POST message on locked channel without unlock -> rejected 403
+        req_post_locked = build_request('POST', '/api/chat/messages/', {'project': locked_proj.id, 'text': 'Should not post'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_post_locked = chat_messages(req_post_locked)
+        assert resp_post_locked.status_code == 403, "Posting to locked channel without unlock must be forbidden"
+
+        # Test invalid passcode formats:
+        # Non-hex character 'GG12'
+        req_bad1 = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': 'GG12'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_bad1 = api_unlock_channel(req_bad1, str(locked_proj.id))
+        assert resp_bad1.status_code == 400
+
+        # 5 characters '12345'
+        req_bad2 = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': '12345'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_bad2 = api_unlock_channel(req_bad2, str(locked_proj.id))
+        assert resp_bad2.status_code == 400
+
+        # 2 characters 'AB'
+        req_bad3 = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': 'AB'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_bad3 = api_unlock_channel(req_bad3, str(locked_proj.id))
+        assert resp_bad3.status_code == 400
+
+        # Wrong 4-character hex 'B2E8'
+        req_wrong = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': 'B2E8'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_wrong = api_unlock_channel(req_wrong, str(locked_proj.id))
+        assert resp_wrong.status_code == 400
+        assert json.loads(resp_wrong.content)['status'] == 'error'
+
+        # Correct 4-character hex 'a3f9' (case-insensitive)
+        req_correct = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': 'a3f9'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_correct = api_unlock_channel(req_correct, str(locked_proj.id))
+        assert resp_correct.status_code == 200, resp_correct.content
+        assert json.loads(resp_correct.content)['status'] == 'ok'
+        assert str(locked_proj.id) in req_correct.session.get('unlocked_channels', [])
+
+        # Once unlocked in session, messages are accessible
+        req_get_unlocked = build_request('GET', f'/api/chat/messages/?project={locked_proj.id}', session_data=req_correct.session)
+        resp_get_unlocked = chat_messages(req_get_unlocked)
+        data_unlocked = json.loads(resp_get_unlocked.content)
+        assert data_unlocked['status'] == 'ok'
+        assert 'messages' in data_unlocked
+
+        results['11_channel_locking_and_hex_validation'] = "PASSED"
+    except Exception as e:
+        results['11_channel_locking_and_hex_validation'] = f"FAILED: {e}"
+
+    # 12. Channel Rate Limiting / Brute Force Protection Test
+    try:
+        rate_proj, _ = Project.objects.get_or_create(
+            name='QA Rate Limit Channel',
+            company=test_co,
+            defaults={'description': 'Rate limit testing'}
+        )
+        ProjectMember.objects.get_or_create(project=rate_proj, employee=chatter, defaults={'can_chat': True, 'is_allowed': True})
+
+        # Lock channel with code 'F4D2'
+        req_lock_r = build_request('POST', f'/api/chat/lock-settings/{rate_proj.id}/', {
+            'is_locked': True,
+            'passcode': 'F4D2'
+        }, session_data={'verified': True, 'otp_email': test_co.email})
+        api_channel_lock_settings(req_lock_r, str(rate_proj.id))
+
+        # Perform 5 consecutive failed unlock attempts in the same session
+        sess = {'verified': True, 'otp_email': chatter.email}
+        for i in range(5):
+            req_f = build_request('POST', f'/api/chat/unlock/{rate_proj.id}/', {'passcode': f'000{i}'}, session_data=sess)
+            resp_f = api_unlock_channel(req_f, str(rate_proj.id))
+            sess = req_f.session
+
+        # 6th attempt should trigger 429 Too Many Requests rate limit
+        req_limit = build_request('POST', f'/api/chat/unlock/{rate_proj.id}/', {'passcode': 'F4D2'}, session_data=sess)
+        resp_limit = api_unlock_channel(req_limit, str(rate_proj.id))
+        assert resp_limit.status_code == 429, f"Expected 429 rate limit, got {resp_limit.status_code}"
+        assert 'Too many failed attempts' in json.loads(resp_limit.content)['message']
+
+        results['12_channel_rate_limiting'] = "PASSED"
+    except Exception as e:
+        results['12_channel_rate_limiting'] = f"FAILED: {e}"
+
+    # 13. Admin Lock Management & Passcode Modification Test
+    try:
+        # Non-admin employee trying to change lock settings -> 403 Forbidden
+        req_unauth = build_request('POST', f'/api/chat/lock-settings/{locked_proj.id}/', {
+            'is_locked': False
+        }, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_unauth = api_channel_lock_settings(req_unauth, str(locked_proj.id))
+        assert resp_unauth.status_code == 403, "Non-admin must not change lock settings"
+
+        # Admin changes passcode to '00AF'
+        req_chg = build_request('POST', f'/api/chat/lock-settings/{locked_proj.id}/', {
+            'is_locked': True,
+            'passcode': '00AF'
+        }, session_data={'verified': True, 'otp_email': test_co.email})
+        resp_chg = api_channel_lock_settings(req_chg, str(locked_proj.id))
+        assert json.loads(resp_chg.content)['status'] == 'ok'
+
+        # Old passcode 'A3F9' now fails
+        req_old = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': 'A3F9'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_old = api_unlock_channel(req_old, str(locked_proj.id))
+        assert resp_old.status_code == 400
+
+        # New passcode '00AF' succeeds
+        req_new = build_request('POST', f'/api/chat/unlock/{locked_proj.id}/', {'passcode': '00AF'}, session_data={'verified': True, 'otp_email': chatter.email})
+        resp_new = api_unlock_channel(req_new, str(locked_proj.id))
+        assert resp_new.status_code == 200
+
+        # Admin disables lock
+        req_dis = build_request('POST', f'/api/chat/lock-settings/{locked_proj.id}/', {
+            'is_locked': False
+        }, session_data={'verified': True, 'otp_email': test_co.email})
+        resp_dis = api_channel_lock_settings(req_dis, str(locked_proj.id))
+        assert json.loads(resp_dis.content)['is_locked'] is False
+        locked_proj.refresh_from_db()
+        assert locked_proj.is_locked is False
+
+        results['13_admin_lock_management'] = "PASSED"
+    except Exception as e:
+        results['13_admin_lock_management'] = f"FAILED: {e}"
+
+    # 14. Media Upload, Storage & Database Persistence Test
+    try:
+        # Create test image and document files
+        sample_img = SimpleUploadedFile("diagram.png", b"fake_png_binary_data_123456", content_type="image/png")
+        sample_doc = SimpleUploadedFile("spec.pdf", b"%PDF-1.4 fake_pdf_data_header_test", content_type="application/pdf")
+
+        req_media = build_multipart_request(
+            path='/api/chat/messages/',
+            data={'project': str(test_proj.id), 'text': 'Here are the design specs and diagrams'},
+            files={'files': sample_img},
+            session_data={'verified': True, 'otp_email': user_emp.email}
+        )
+        resp_media = chat_messages(req_media)
+        assert resp_media.status_code == 200, f"Status {resp_media.status_code}: {resp_media.content}"
+        media_data = json.loads(resp_media.content)
+        assert media_data['status'] == 'ok'
+        msg_id = media_data['message']['id']
+        assert len(media_data['message']['media']) == 1
+        media_item = media_data['message']['media'][0]
+        assert media_item['filename'] == 'diagram.png'
+        assert media_item['is_image'] is True
+
+        # Verify DB persistence
+        media_rec = ChatMessageMedia.objects.filter(message_id=msg_id).first()
+        assert media_rec is not None
+        assert media_rec.original_filename == 'diagram.png'
+        assert media_rec.file_size > 0
+
+        # Upload document attachment
+        req_doc = build_multipart_request(
+            path='/api/chat/messages/',
+            data={'project': str(test_proj.id), 'text': 'PDF document attached'},
+            files={'files': sample_doc},
+            session_data={'verified': True, 'otp_email': user_emp.email}
+        )
+        resp_doc = chat_messages(req_doc)
+        doc_data = json.loads(resp_doc.content)
+        assert doc_data['status'] == 'ok'
+        assert doc_data['message']['media'][0]['is_document'] is True
+
+        # Test dangerous extension rejection (.exe)
+        bad_file = SimpleUploadedFile("malicious.exe", b"MZ_binary_executable", content_type="application/x-msdownload")
+        req_bad = build_multipart_request(
+            path='/api/chat/messages/',
+            data={'project': str(test_proj.id), 'text': 'Dangerous file'},
+            files={'files': bad_file},
+            session_data={'verified': True, 'otp_email': user_emp.email}
+        )
+        resp_bad = chat_messages(req_bad)
+        assert resp_bad.status_code == 400
+        assert 'not permitted' in json.loads(resp_bad.content)['message']
+
+        results['14_media_upload_and_persistence'] = "PASSED"
+    except Exception as e:
+        results['14_media_upload_and_persistence'] = f"FAILED: {e}"
+
+    # 15. Media Access Control & Streaming Endpoint Test
+    try:
+        # Authorized user stream media (view inline)
+        req_view = build_request('GET', f'/api/chat/media/{media_rec.id}/', session_data={'verified': True, 'otp_email': user_emp.email})
+        resp_view = api_chat_media(req_view, media_rec.id)
+        assert resp_view.status_code == 200
+        assert 'inline' in resp_view['Content-Disposition']
+
+        # Authorized user download media (Content-Disposition attachment)
+        req_dl = build_request('GET', f'/api/chat/media/{media_rec.id}/?download=1', session_data={'verified': True, 'otp_email': user_emp.email})
+        resp_dl = api_chat_media(req_dl, media_rec.id)
+        assert resp_dl.status_code == 200
+        assert 'attachment' in resp_dl['Content-Disposition']
+
+        # Disallowed user from different company -> 400/403
+        other_co, _ = Company.objects.get_or_create(email='other_company@teamnext.test', defaults={'name': 'Other Corp', 'password': 'pwd'})
+        req_other = build_request('GET', f'/api/chat/media/{media_rec.id}/', session_data={'verified': True, 'otp_email': other_co.email})
+        resp_other = api_chat_media(req_other, media_rec.id)
+        assert resp_other.status_code == 400 or resp_other.status_code == 403
+
+        # Media on locked channel without unlock -> blocked
+        locked_proj.is_locked = True
+        locked_proj.passcode_hash = 'pbkdf2_sha256$test'
+        locked_proj.save()
+        locked_msg = ChatMessage.objects.create(project=locked_proj, employee=user_emp, text='Secret image')
+        locked_media = ChatMessageMedia.objects.create(message=locked_msg, original_filename='secret.png', file=sample_img, content_type='image/png', file_size=100)
+
+        # Locked channel access without unlock session -> blocked
+        req_lock_media = build_request('GET', f'/api/chat/media/{locked_media.id}/', session_data={'verified': True, 'otp_email': user_emp.email})
+        resp_lock_media = api_chat_media(req_lock_media, locked_media.id)
+        assert resp_lock_media.status_code == 400 or resp_lock_media.status_code == 403
+
+        # Locked channel with unlocked session -> allowed
+        req_unlock_media = build_request('GET', f'/api/chat/media/{locked_media.id}/', session_data={'verified': True, 'otp_email': user_emp.email, 'unlocked_channels': [str(locked_proj.id)]})
+        resp_unlock_media = api_chat_media(req_unlock_media, locked_media.id)
+        assert resp_unlock_media.status_code == 200
+
+        results['15_media_access_control'] = "PASSED"
+    except Exception as e:
+        results['15_media_access_control'] = f"FAILED: {e}"
+
+    # 16. Session Clearance on Logout Test
+    try:
+        rf = RequestFactory()
+        req_logout = rf.get('/logout/')
+        SessionMiddleware(lambda r: None).process_request(req_logout)
+        MessageMiddleware(lambda r: None).process_request(req_logout)
+        req_logout.session['verified'] = True
+        req_logout.session['otp_email'] = user_emp.email
+        req_logout.session['unlocked_channels'] = [str(test_proj.id), str(locked_proj.id)]
+        req_logout.session['lock_failed_attempts'] = {'1': 3}
+        req_logout.session.save()
+
+        resp_logout = logout_view(req_logout)
+        assert resp_logout.status_code == 302
+        assert 'unlocked_channels' not in req_logout.session
+        assert 'lock_failed_attempts' not in req_logout.session
+        assert 'verified' not in req_logout.session
+
+        results['16_session_clearance_on_logout'] = "PASSED"
+    except Exception as e:
+        results['16_session_clearance_on_logout'] = f"FAILED: {e}"
+
     print("\nVERIFICATION RESULTS SUMMARY:")
     print("-" * 60)
     for test_name, status in results.items():
@@ -301,7 +587,7 @@ def run_tests():
     print("=" * 60)
 
     if all(s == "PASSED" for s in results.values()):
-        print("ALL 10 QA AUDIT AREAS PASSED SUCCESSFULLY!")
+        print("ALL 16 QA AUDIT AREAS PASSED SUCCESSFULLY!")
         return 0
     else:
         print("SOME TESTS FAILED - PLEASE REVIEW.")

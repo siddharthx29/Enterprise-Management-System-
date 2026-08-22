@@ -1,3 +1,6 @@
+import os
+import re
+import mimetypes
 import secrets
 import time
 
@@ -6,7 +9,7 @@ from datetime import timedelta, datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.conf import settings
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Sum, Count, Avg, F
@@ -16,7 +19,7 @@ from django.contrib.auth.hashers import make_password, check_password, identify_
 from .brevo_helper import send_brevo_email
 from .models import (
     Company, Employee, Project, ProjectMember, Ticket, ChatMessage,
-    EmailMessage, LeaveRequest, SocialItem, Department,
+    ChatMessageMedia, EmailMessage, LeaveRequest, SocialItem, Department,
     Invoice, Expense, Payroll, VendorPayment, BankTransaction,
     InventoryItem, Attendance
 )
@@ -1368,7 +1371,11 @@ def analytics_api(request):
 
 def logout_view(request):
 
-    keys_to_clear = ['verified', 'otp_email', 'otp', 'otp_expiry', 'otp_action', 'resend_count', 'pending_signup', 'password_reset_email']
+    keys_to_clear = [
+        'verified', 'otp_email', 'otp', 'otp_expiry', 'otp_action',
+        'resend_count', 'pending_signup', 'password_reset_email',
+        'unlocked_channels', 'lock_failed_attempts'
+    ]
 
     for key in keys_to_clear:
 
@@ -1479,6 +1486,247 @@ def save_settings(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
+HEX_PASSCODE_PATTERN = re.compile(r'^[0-9a-fA-F]{4}$')
+DANGEROUS_EXTENSIONS = {
+    '.exe', '.bat', '.cmd', '.sh', '.py', '.php', '.js', '.vbs', '.jar',
+    '.scr', '.pif', '.dll', '.msi', '.com', '.app', '.deb', '.rpm', '.bin', '.cgi', '.pl'
+}
+
+def is_valid_hex_passcode(code):
+    return bool(code and HEX_PASSCODE_PATTERN.match(str(code).strip()))
+
+def sanitize_filename(filename):
+    name = os.path.basename(filename)
+    name = re.sub(r'[^a-zA-Z0-9_\-\.\(\)\s]', '_', name)
+    return name or 'attachment'
+
+def get_media_category(content_type, filename):
+    ct = (content_type or '').lower()
+    ext = os.path.splitext(filename)[1].lower()
+    if ct.startswith('image/') or ext in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp', '.ico'):
+        return 'image'
+    elif ct.startswith('video/') or ext in ('.mp4', '.webm', '.mov', '.ogg', '.mkv', '.avi'):
+        return 'video'
+    elif ct.startswith('audio/') or ext in ('.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac'):
+        return 'audio'
+    else:
+        return 'document'
+
+def check_channel_rate_limit(request, project_id):
+    attempts_dict = request.session.get('lock_failed_attempts', {})
+    proj_key = str(project_id)
+    entry = attempts_dict.get(proj_key, {'count': 0, 'locked_until': 0})
+    now = time.time()
+    if entry.get('locked_until', 0) > now:
+        remaining = max(1, int(entry['locked_until'] - now))
+        return False, f"Too many failed attempts. Please wait {remaining} seconds before trying again."
+    return True, None
+
+def record_channel_failed_attempt(request, project_id):
+    attempts_dict = request.session.get('lock_failed_attempts', {})
+    proj_key = str(project_id)
+    entry = attempts_dict.get(proj_key, {'count': 0, 'locked_until': 0})
+    entry['count'] = entry.get('count', 0) + 1
+    if entry['count'] >= 5:
+        entry['locked_until'] = time.time() + 180
+        entry['count'] = 0
+    attempts_dict[proj_key] = entry
+    request.session['lock_failed_attempts'] = attempts_dict
+    request.session.save()
+
+def clear_channel_failed_attempts(request, project_id):
+    attempts_dict = request.session.get('lock_failed_attempts', {})
+    proj_key = str(project_id)
+    if proj_key in attempts_dict:
+        attempts_dict.pop(proj_key, None)
+        request.session['lock_failed_attempts'] = attempts_dict
+        request.session.save()
+
+
+@csrf_exempt
+def api_unlock_channel(request, project_id):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+    try:
+        proj = Project.objects.filter(id=int(project_id), company=co).first() if str(project_id).isdigit() else Project.objects.filter(name__iexact=str(project_id), company=co).first()
+    except Exception:
+        proj = None
+
+    if not proj:
+        return JsonResponse({'status': 'error', 'message': 'Channel not found'}, status=404)
+
+    if not proj.is_locked:
+        unlocked = request.session.get('unlocked_channels', [])
+        if str(proj.id) not in unlocked:
+            unlocked.append(str(proj.id))
+            request.session['unlocked_channels'] = unlocked
+            request.session.save()
+        return JsonResponse({'status': 'ok', 'is_unlocked': True, 'message': 'Channel is not locked'})
+
+    allowed, err_msg = check_channel_rate_limit(request, proj.id)
+    if not allowed:
+        return JsonResponse({'status': 'error', 'message': err_msg}, status=429)
+
+    try:
+        import json
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except Exception:
+        payload = {}
+    passcode = (payload.get('passcode') or request.POST.get('passcode') or '').strip()
+
+    if not is_valid_hex_passcode(passcode):
+        record_channel_failed_attempt(request, proj.id)
+        return JsonResponse({'status': 'error', 'message': 'Invalid passcode. Passcode must be exactly 4 hexadecimal characters (0-9, A-F).'}, status=400)
+
+    passcode_upper = passcode.upper()
+    if proj.passcode_hash and check_password(passcode_upper, proj.passcode_hash):
+        clear_channel_failed_attempts(request, proj.id)
+        unlocked = request.session.get('unlocked_channels', [])
+        if str(proj.id) not in unlocked:
+            unlocked.append(str(proj.id))
+            request.session['unlocked_channels'] = unlocked
+            request.session.save()
+        return JsonResponse({'status': 'ok', 'is_unlocked': True, 'message': 'Channel unlocked successfully'})
+    else:
+        record_channel_failed_attempt(request, proj.id)
+        return JsonResponse({'status': 'error', 'message': 'Incorrect passcode.'}, status=400)
+
+
+@csrf_exempt
+def api_channel_lock_settings(request, project_id):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+    is_admin = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, is_admin=True).exists()) or (emp and ProjectMember.objects.filter(employee=emp, can_modify_settings=True).exists())
+
+    try:
+        proj = Project.objects.filter(id=int(project_id), company=co).first() if str(project_id).isdigit() else Project.objects.filter(name__iexact=str(project_id), company=co).first()
+    except Exception:
+        proj = None
+
+    if not proj:
+        return JsonResponse({'status': 'error', 'message': 'Channel not found'}, status=404)
+
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'project_id': proj.id,
+            'project_name': proj.name,
+            'is_locked': proj.is_locked,
+            'has_passcode': bool(proj.passcode_hash),
+            'is_admin': is_admin
+        })
+
+    if request.method == 'POST':
+        if not is_admin:
+            return JsonResponse({'status': 'error', 'message': 'Only workspace administrators or channel owners can change lock settings.'}, status=403)
+
+        try:
+            import json
+            payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+        except Exception:
+            payload = {}
+
+        lock_action = payload.get('action')
+        is_locked = payload.get('is_locked')
+        passcode = (payload.get('passcode') or '').strip()
+
+        if lock_action == 'unlock_permanently' or is_locked is False:
+            proj.is_locked = False
+            proj.save(update_fields=['is_locked'])
+            return JsonResponse({'status': 'ok', 'is_locked': False, 'message': 'Channel lock has been disabled.'})
+
+        if is_locked is True or lock_action == 'lock':
+            if passcode:
+                if not is_valid_hex_passcode(passcode):
+                    return JsonResponse({'status': 'error', 'message': 'Passcode must be exactly 4 hexadecimal characters (0-9, A-F).'}, status=400)
+                proj.passcode_hash = make_password(passcode.upper())
+                proj.is_locked = True
+                proj.save(update_fields=['passcode_hash', 'is_locked'])
+            elif proj.passcode_hash:
+                proj.is_locked = True
+                proj.save(update_fields=['is_locked'])
+            else:
+                return JsonResponse({'status': 'error', 'message': 'A 4-character hexadecimal passcode is required to lock the channel.'}, status=400)
+
+            unlocked = request.session.get('unlocked_channels', [])
+            if str(proj.id) not in unlocked:
+                unlocked.append(str(proj.id))
+                request.session['unlocked_channels'] = unlocked
+                request.session.save()
+
+            return JsonResponse({'status': 'ok', 'is_locked': True, 'message': 'Channel lock settings saved.'})
+
+        return JsonResponse({'status': 'error', 'message': 'Invalid lock action'}, status=400)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+
+@csrf_exempt
+def api_chat_media(request, media_id):
+    if not request.session.get('verified'):
+        return HttpResponseBadRequest("Unauthorized")
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+    if not co:
+        return HttpResponseBadRequest("Unauthorized")
+
+    try:
+        media = ChatMessageMedia.objects.select_related('message__project', 'message__employee').get(id=media_id)
+    except ChatMessageMedia.DoesNotExist:
+        return HttpResponseBadRequest("Media not found")
+
+    proj = media.message.project
+    if proj.company_id != co.id:
+        return HttpResponseBadRequest("Access denied")
+
+    if not Company.objects.filter(email__iexact=email).exists() and emp:
+        pm = ProjectMember.objects.filter(project=proj, employee=emp).first()
+        if pm and not pm.is_allowed:
+            return HttpResponseBadRequest("Access restricted")
+
+    if proj.is_locked:
+        unlocked = request.session.get('unlocked_channels', [])
+        if str(proj.id) not in unlocked:
+            return HttpResponseBadRequest("Channel locked")
+
+    if not media.file or not os.path.exists(media.file.path):
+        return HttpResponseBadRequest("File not found on server")
+
+    content_type = media.content_type or 'application/octet-stream'
+    response = FileResponse(open(media.file.path, 'rb'), content_type=content_type)
+    safe_name = sanitize_filename(media.original_filename)
+    if request.GET.get('download') == '1':
+        response['Content-Disposition'] = f'attachment; filename="{safe_name}"'
+    else:
+        response['Content-Disposition'] = f'inline; filename="{safe_name}"'
+    return response
+
+
 @csrf_exempt
 def chat_messages(request):
     if not request.session.get('verified'):
@@ -1496,11 +1744,11 @@ def chat_messages(request):
 
     try:
         import json
-        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+        payload = json.loads(request.body.decode('utf-8')) if request.body and request.content_type == 'application/json' else {}
     except Exception:
         payload = {}
 
-    project_id = payload.get('project') or request.GET.get('project') or payload.get('project_id')
+    project_id = payload.get('project') or request.GET.get('project') or payload.get('project_id') or request.POST.get('project') or request.POST.get('project_id')
     if not project_id:
         return JsonResponse({'status': 'error', 'message': 'Missing project id'}, status=400)
 
@@ -1515,7 +1763,7 @@ def chat_messages(request):
     except Exception:
         return JsonResponse({'status': 'error', 'message': 'Error finding project'}, status=500)
 
-    # Server-side permission check: verify employee is allowed to view/chat in this project
+    # Server-side permission check: verify employee is allowed in this project
     if not is_company_admin and emp:
         membership = ProjectMember.objects.filter(project=proj, employee=emp).first()
         if membership:
@@ -1524,26 +1772,75 @@ def chat_messages(request):
             if request.method == 'POST' and not membership.can_chat:
                 return JsonResponse({'status': 'error', 'message': 'You do not have chat permissions in this channel'}, status=403)
 
+    unlocked_list = request.session.get('unlocked_channels', [])
+    is_unlocked = (not proj.is_locked) or (str(proj.id) in unlocked_list)
+
     if request.method == 'GET':
-        msgs_qs = ChatMessage.objects.filter(project=proj).select_related('employee').order_by('timestamp')
+        if proj.is_locked and not is_unlocked:
+            return JsonResponse({
+                'status': 'locked',
+                'is_locked': True,
+                'requires_unlock': True,
+                'project': {'id': proj.id, 'name': proj.name},
+                'message': 'This channel is locked. Please enter the passcode to access conversation and media.'
+            })
+
+        msgs_qs = ChatMessage.objects.filter(project=proj).select_related('employee').prefetch_related('media_attachments').order_by('timestamp')
         result = []
         for m in msgs_qs:
             sender_name = m.employee.name if m.employee else 'User'
             sender_email = m.employee.email if m.employee else ''
+            media_list = []
+            for med in m.media_attachments.all():
+                cat = get_media_category(med.content_type, med.original_filename)
+                media_list.append({
+                    'id': med.id,
+                    'filename': med.original_filename,
+                    'content_type': med.content_type,
+                    'file_size': med.file_size,
+                    'formatted_size': med.formatted_size,
+                    'category': cat,
+                    'url': f'/api/chat/media/{med.id}/',
+                    'download_url': f'/api/chat/media/{med.id}/?download=1',
+                    'is_image': cat == 'image',
+                    'is_video': cat == 'video',
+                    'is_audio': cat == 'audio',
+                    'is_document': cat == 'document'
+                })
+
             result.append({
+                'id': m.id,
                 'user': sender_name,
                 'email': sender_email,
                 'text': m.text,
-                'time': int(m.timestamp.timestamp()) if m.timestamp else 0
+                'time': int(m.timestamp.timestamp()) if m.timestamp else 0,
+                'media': media_list
             })
-        return JsonResponse({'status': 'ok', 'messages': result})
+        return JsonResponse({'status': 'ok', 'is_locked': proj.is_locked, 'is_unlocked': True, 'messages': result})
 
     if request.method == 'POST':
-        text = (payload.get('text') or '').strip()
-        if not text:
-            return JsonResponse({'status': 'error', 'message': 'Message cannot be empty'}, status=400)
+        if proj.is_locked and not is_unlocked:
+            return JsonResponse({'status': 'locked', 'is_locked': True, 'message': 'This channel is locked. Unlock it before sending messages.'}, status=403)
 
-        # Ensure employee profile exists for sender
+        text = ''
+        files = []
+        if request.FILES:
+            text = (request.POST.get('text') or '').strip()
+            files = request.FILES.getlist('files') or ([request.FILES['file']] if 'file' in request.FILES else [])
+        else:
+            text = (payload.get('text') or request.POST.get('text') or '').strip()
+
+        if not text and not files:
+            return JsonResponse({'status': 'error', 'message': 'Message text or attachment is required'}, status=400)
+
+        # Validate files
+        for f in files:
+            if f.size > 25 * 1024 * 1024:
+                return JsonResponse({'status': 'error', 'message': f'File "{f.name}" exceeds maximum allowed upload size of 25MB.'}, status=400)
+            ext = os.path.splitext(f.name)[1].lower()
+            if ext in DANGEROUS_EXTENSIONS:
+                return JsonResponse({'status': 'error', 'message': f'File extension "{ext}" is not permitted.'}, status=400)
+
         if not emp:
             emp, _ = Employee.objects.get_or_create(
                 email=co.email,
@@ -1556,13 +1853,42 @@ def chat_messages(request):
             )
 
         msg = ChatMessage.objects.create(project=proj, employee=emp, text=text)
+        created_media = []
+        for f in files:
+            ct = f.content_type or mimetypes.guess_type(f.name)[0] or 'application/octet-stream'
+            safe_name = sanitize_filename(f.name)
+            med = ChatMessageMedia.objects.create(
+                message=msg,
+                original_filename=safe_name,
+                file=f,
+                content_type=ct,
+                file_size=f.size
+            )
+            cat = get_media_category(ct, safe_name)
+            created_media.append({
+                'id': med.id,
+                'filename': med.original_filename,
+                'content_type': med.content_type,
+                'file_size': med.file_size,
+                'formatted_size': med.formatted_size,
+                'category': cat,
+                'url': f'/api/chat/media/{med.id}/',
+                'download_url': f'/api/chat/media/{med.id}/?download=1',
+                'is_image': cat == 'image',
+                'is_video': cat == 'video',
+                'is_audio': cat == 'audio',
+                'is_document': cat == 'document'
+            })
+
         return JsonResponse({
             'status': 'ok',
             'message': {
+                'id': msg.id,
                 'user': emp.name,
                 'email': emp.email,
-                'text': text,
-                'time': int(msg.timestamp.timestamp())
+                'text': msg.text,
+                'time': int(msg.timestamp.timestamp()),
+                'media': created_media
             }
         })
 
@@ -1589,6 +1915,7 @@ def api_projects(request):
         else:
             projects_qs = Project.objects.none()
 
+        unlocked_list = request.session.get('unlocked_channels', [])
         result = []
         for p in projects_qs:
             dept_list = list(p.departments.values('id', 'name'))
@@ -1596,7 +1923,9 @@ def api_projects(request):
                 'id': p.id,
                 'name': p.name,
                 'desc': p.description or '',
-                'departments': dept_list
+                'departments': dept_list,
+                'is_locked': p.is_locked,
+                'is_unlocked': (not p.is_locked) or (str(p.id) in unlocked_list)
             })
         return JsonResponse({'status': 'ok', 'projects': result, 'is_admin': is_admin})
 
@@ -2030,17 +2359,41 @@ def chat_page(request):
 
         return redirect('login')
 
-    email = request.session.get('otp_email')
+    email = (request.session.get('otp_email') or '').strip().lower()
 
-    co = Company.objects.filter(email=email).first()
+    co = Company.objects.filter(email__iexact=email).first()
+
+    emp = Employee.objects.filter(email__iexact=email).first()
+
+    if not co and emp:
+
+        co = emp.company
 
     if not co:
 
-        emp = Employee.objects.filter(email=email).first()
+        return redirect('login')
 
-        co = emp.company if emp else None
+    is_admin = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, is_admin=True).exists()) or (emp and ProjectMember.objects.filter(employee=emp, can_modify_settings=True).exists())
 
-    projects_qs = Project.objects.filter(company=co) if co else Project.objects.none()
+    if is_admin:
+        projects_qs = Project.objects.filter(company=co).prefetch_related('departments')
+    else:
+        projects_qs = Project.objects.filter(company=co, members__employee=emp, members__is_allowed=True).prefetch_related('departments').distinct()
+        if not projects_qs.exists() and not ProjectMember.objects.filter(employee=emp).exists():
+            projects_qs = Project.objects.filter(company=co).prefetch_related('departments')
+
+    unlocked_list = request.session.get('unlocked_channels', [])
+    projects_data = []
+    for p in projects_qs:
+        dept = p.departments.first()
+        projects_data.append({
+            'id': p.id,
+            'name': p.name,
+            'description': p.description or '',
+            'is_locked': p.is_locked,
+            'is_unlocked': (not p.is_locked) or (str(p.id) in unlocked_list),
+            'department_name': dept.name if dept else 'General'
+        })
 
     return render(request, 'chat_page.html', {
 
@@ -2048,7 +2401,11 @@ def chat_page(request):
 
         'projects': projects_qs,
 
-        'email': email
+        'projects_data': projects_data,
+
+        'email': email,
+
+        'is_admin': is_admin
 
     })
 
@@ -2289,41 +2646,44 @@ def save_email_draft(request):
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @csrf_exempt
-
 def receive_email(request):
-
     if request.method != 'POST':
-
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
     try:
-
         import json
-
         payload = json.loads(request.body.decode('utf-8'))
+        session_email = (request.session.get('otp_email') or '').strip().lower()
+        recipient_email = (payload.get('to') or payload.get('recipient') or payload.get('recipient_email') or session_email).strip().lower()
+        sender_email = (payload.get('from') or payload.get('sender') or payload.get('sender_email') or 'external@example.com').strip().lower()
+        subject = (payload.get('subject') or '(No Subject)').strip()
+        body = (payload.get('body') or payload.get('message') or payload.get('text') or '').strip()
 
-        email = request.session.get('otp_email')
+        if not recipient_email:
+            return JsonResponse({'status': 'error', 'message': 'Recipient email is required'}, status=400)
 
-        EmailMessage.objects.create(
-
-            sender_email=payload.get('from', 'unknown'),
-
-            recipient_email=email,
-
-            subject=payload.get('subject', '(no subject)'),
-
-            body=payload.get('body', ''),
-
+        msg = EmailMessage.objects.create(
+            sender_email=sender_email,
+            recipient_email=recipient_email,
+            subject=subject,
+            body=body,
             is_draft=False,
-
             is_sent=True
-
         )
 
-        return JsonResponse({'status': 'ok'})
+        return JsonResponse({
+            'status': 'ok',
+            'message': 'Email received and delivered to inbox successfully',
+            'email': {
+                'id': msg.id,
+                'from': msg.sender_email,
+                'to': msg.recipient_email,
+                'subject': msg.subject,
+                'body': msg.body
+            }
+        })
 
     except Exception as e:
-
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 def finance_page(request):
@@ -2459,6 +2819,30 @@ def api_notifications(request):
             'time': m.timestamp.strftime('%H:%M') if m.timestamp else 'Recent',
             'link': '/email-page/',
             'unread': False
+        })
+
+    # 4. Social Club Activities (Birthdays, Hot Topics, Daily Dares)
+    recent_socials = SocialItem.objects.filter(company=co).order_by('-created_at')[:4]
+    for item in recent_socials:
+        if item.type == 'birthday':
+            s_title = f"🎉 Birthday: {item.title}"
+            s_msg = f"{item.content or 'Celebration'} • {item.meta_info or 'Today'}"
+        elif item.type == 'topic':
+            s_title = f"🔥 Hot Topic: {item.title}"
+            s_msg = f"Started by {item.meta_info or 'Team'}"
+        elif item.type == 'dare':
+            s_title = f"⚡ Daily Dare: {item.title}"
+            s_msg = f"Target: {item.meta_info or 'Team'} • {item.content or ''}"
+        else:
+            s_title = f"Social Club: {item.title}"
+            s_msg = item.content or ''
+
+        notifications.append({
+            'title': s_title,
+            'message': s_msg,
+            'time': item.created_at.strftime('%b %d') if item.created_at else 'Social Club',
+            'link': '/social-page/',
+            'unread': True
         })
 
     unread_count = len([n for n in notifications if n.get('unread')])

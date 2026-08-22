@@ -67,6 +67,10 @@ class Project(models.Model):
 
     description = models.TextField(blank=True, null=True)
 
+    is_locked = models.BooleanField(default=False)
+
+    passcode_hash = models.CharField(max_length=255, blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -123,9 +127,37 @@ class ChatMessage(models.Model):
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='chat_messages')
 
-    text = models.TextField()
+    text = models.TextField(blank=True, default='')
 
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class ChatMessageMedia(models.Model):
+
+    message = models.ForeignKey(ChatMessage, on_delete=models.CASCADE, related_name='media_attachments')
+
+    original_filename = models.CharField(max_length=255)
+
+    file = models.FileField(upload_to='chat_media/%Y/%m/', blank=True, null=True)
+
+    content_type = models.CharField(max_length=100)
+
+    file_size = models.BigIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.original_filename} ({self.content_type})"
+
+    @property
+    def formatted_size(self):
+        size = self.file_size
+        if size < 1024:
+            return f"{size} B"
+        elif size < 1024 * 1024:
+            return f"{size / 1024:.1f} KB"
+        else:
+            return f"{size / (1024 * 1024):.1f} MB"
+
 
 class EmailMessage(models.Model):
 

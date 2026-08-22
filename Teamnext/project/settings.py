@@ -17,13 +17,18 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-change-this'
 # Reads DEBUG from environment — set to "False" on Render, "True" locally
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [
-    "127.0.0.1",
-    "localhost",
-    "teamnexterp.com",
-    "www.teamnexterp.com",
-    ".onrender.com"
-]
+allowed_hosts_env = os.environ.get("ALLOWED_HOSTS")
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
+else:
+    ALLOWED_HOSTS = [
+        "127.0.0.1",
+        "localhost",
+        "testserver",
+        "teamnexterp.com",
+        "www.teamnexterp.com",
+        ".onrender.com"
+    ]
 
 # Tell Django it's behind a proxy (Required for Render HTTPS)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -113,16 +118,23 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Use CompressedStaticFilesStorage to avoid crashes if manifest is missing on Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://teamnexterp.com",
-    "https://www.teamnexterp.com",
-    "https://*.onrender.com"
-]
+csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS")
+if csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins_env.split(",") if o.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        "https://teamnexterp.com",
+        "https://www.teamnexterp.com",
+        "https://*.onrender.com"
+    ]
 
 # ============================================================
 # Email Settings — all values read from environment variables
