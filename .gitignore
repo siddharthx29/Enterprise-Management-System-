@@ -1,14 +1,47 @@
-# Default standard gitignore for python projects targeting railway
-*.pyc
+# ============================================================
+# Git Ignore Rules for TeamNext Enterprise ERP
+# ============================================================
+
+# Environment and Secret Files
+.env
+.env.*
+!.env.example
+*.env
+**/.env
+
+# SQLite Database & Local Data
+*.sqlite3
+*.db
+db.sqlite3
+Teamnext/db.sqlite3
+
+# Python bytecode & cache
 __pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Static and media directories
+staticfiles/
+Teamnext/staticfiles/
+media/
+Teamnext/media/
+
+# Virtual Environments
 venv/
 env/
-.env
-db.sqlite3
-staticfiles/
+ENV/
+.venv/
 
-Teamnext/.env
+# IDE and Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
 
-Teamnext/Teamnext/.env
-
-**/.env
+# Logs and Session dumps
+*.log
+logs/
+*.out

@@ -139,6 +139,9 @@
 
         document.getElementById('saveSettingsBtn').addEventListener('click', async function () {
             const name = document.getElementById('companyName').value.trim();
+            const phone = document.getElementById('companyPhone').value.trim();
+            const website = document.getElementById('companyWebsite').value.trim();
+            const desc = document.getElementById('companyDesc').value.trim();
             const st = document.getElementById('settingsStatus');
 
             if (!name) {
@@ -153,13 +156,18 @@
                 const res = await fetch('/api/save-settings/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ company_name: name })
+                    body: JSON.stringify({ 
+                        company_name: name,
+                        phone: phone,
+                        website: website,
+                        industry: desc
+                    })
                 });
                 const data = await res.json();
                 if (data.status === 'ok') {
                     st.textContent = 'Settings saved successfully!';
                     st.style.color = 'var(--success-green)';
-                    setTimeout(() => location.reload(), 1000);
+                    setTimeout(() => location.reload(), 800);
                 } else {
                     st.textContent = data.message || 'Failed';
                     st.style.color = 'var(--danger-red)';

@@ -36,13 +36,26 @@
         {% endif %}
 
         <!-- Notification Bell with Counter Provision -->
-        <button class="notif-btn" title="Open Tickets & Notifications" onclick="window.location.href='/tickets-page/'">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span class="notif-badge">3</span>
-        </button>
+        <div style="position: relative; display: inline-block;">
+            <button id="topbarNotifBtn" class="notif-btn" title="Open Notifications" onclick="toggleNotifDropdown(event)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span id="topbarNotifBadge" class="notif-badge" style="display: none;">0</span>
+            </button>
+
+            <!-- Notifications Dropdown Panel -->
+            <div id="topbarNotifPanel" style="display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 320px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 1000; overflow: hidden;">
+                <div style="padding: 12px 14px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: #FAFBFD;">
+                    <strong style="font-size: 12.5px; color: var(--text-primary);">Notifications</strong>
+                    <span id="notifHeaderCount" class="badge badge-blue" style="font-size: 10px;">0 New</span>
+                </div>
+                <div id="notifItemsContainer" style="max-height: 280px; overflow-y: auto; padding: 6px 0; display: flex; flex-direction: column;">
+                    <div style="padding: 16px; text-align: center; font-size: 11.5px; color: var(--text-muted);">Loading notifications...</div>
+                </div>
+            </div>
+        </div>
 
         <!-- User Profile Avatar Provision -->
         <a href="/profile-page/" class="header-avatar" title="Account Status: Online (Click to view Profile)" style="text-decoration: none;">
@@ -57,3 +70,69 @@
         </a>
     </div>
 </div>
+
+<script>
+    let notifsLoaded = false;
+
+    async function fetchNotifications() {
+        try {
+            const res = await fetch('/api/notifications/');
+            const data = await res.json();
+            if (data.status === 'ok') {
+                const badge = document.getElementById('topbarNotifBadge');
+                const headerCount = document.getElementById('notifHeaderCount');
+                const container = document.getElementById('notifItemsContainer');
+                const count = data.count || 0;
+
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'flex' : 'none';
+                }
+                if (headerCount) {
+                    headerCount.textContent = `${count} New`;
+                }
+
+                if (container) {
+                    if (!data.notifications || data.notifications.length === 0) {
+                        container.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 11.5px; color: var(--text-muted);">No new notifications</div>';
+                    } else {
+                        container.innerHTML = data.notifications.map(n => `
+                            <a href="${n.link || '/tickets-page/'}" style="text-decoration: none; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); display: block; transition: var(--transition); background: ${n.unread ? 'rgba(79, 142, 247, 0.04)' : '#FFFFFF'};">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${n.title}</span>
+                                    <span style="font-size: 10px; color: var(--text-muted);">${n.time || ''}</span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.3;">${n.message}</div>
+                            </a>
+                        `).join('');
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load notifications', e);
+        }
+    }
+
+    function toggleNotifDropdown(e) {
+        if (e) e.stopPropagation();
+        const panel = document.getElementById('topbarNotifPanel');
+        if (!panel) return;
+        const isOpen = panel.style.display === 'block';
+        panel.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+            fetchNotifications();
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('topbarNotifPanel');
+        const btn = document.getElementById('topbarNotifBtn');
+        if (panel && panel.style.display === 'block') {
+            if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', fetchNotifications);
+</script>

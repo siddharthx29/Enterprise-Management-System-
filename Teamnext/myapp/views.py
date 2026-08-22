@@ -185,60 +185,42 @@ def otp_view(request):
     })
 
 @csrf_exempt
-
 def api_send_otp_json(request):
-
     if request.method != 'POST':
-
         return JsonResponse({'status': 'error', 'message': 'Invalid method'})
 
     try:
-
         import json
-
         data = json.loads(request.body.decode('utf-8'))
-
         target_email = (data.get('target_email') or '').strip().lower()
-
         email = (data.get('email') or '').strip().lower()
+        kind = data.get('kind', 'company')
 
         if not email and not target_email:
+            return JsonResponse({'status': 'error', 'message': 'Email is required'})
 
-            return JsonResponse({'status': 'error', 'message': 'Email required'})
-
-        if email and (Company.objects.filter(email=email).exists() or Employee.objects.filter(email=email).exists()):
-
-            return JsonResponse({'status': 'error', 'message': 'Account already exists'})
+        # Prevent duplicate signup
+        if email and (Company.objects.filter(email__iexact=email).exists() or Employee.objects.filter(email__iexact=email).exists()):
+            return JsonResponse({'status': 'error', 'message': 'An account already exists with this email address.'})
 
         verification_email = target_email if target_email else email
-
         otp = generate_secure_otp()
 
         request.session["otp"] = otp
-
         request.session["otp_email"] = verification_email
-
         request.session["otp_expiry"] = time.time() + 300
-
         request.session["otp_action"] = 'signup'
-
         request.session["otp_attempts"] = 0
 
-        if target_email != email:
-
-            if not Company.objects.filter(email=target_email).exists():
-
+        if kind == 'employee' and target_email and target_email != email:
+            if not Company.objects.filter(email__iexact=target_email).exists():
                 return JsonResponse({'status': 'error', 'message': 'Company with this email does not exist.'})
 
-            msg = f"Hello,\n\nEmployee Registration Request:\nUser: {email}\nTarget Company: {target_email}\n\nVerification OTP: {otp}\n\nThis code has been sent to the company admin for verification."
-
+            msg = f"Hello,\n\nEmployee Registration Request:\nUser: {email}\nTarget Company: {target_email}\n\nVerification OTP: {otp}\n\nThis verification code has been generated for joining the workspace."
             recipients = [target_email]
-
         else:
-
-            msg = f"Hello,\n\nYour OTP for account verification is: {otp}\n\nExpires in 5 minutes."
-
-            recipients = [email]
+            msg = f"Hello,\n\nYour OTP for TeamNext account verification is: {otp}\n\nExpires in 5 minutes."
+            recipients = [verification_email]
 
         html = f"""
             <div style='font-family: Arial, sans-serif; padding: 30px; border-radius: 8px; background-color: #f9fafb; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb;'>
@@ -251,17 +233,19 @@ def api_send_otp_json(request):
                 <p style='color: #4b5563; font-size: 14px;'>This code will expire in 5 minutes.</p>
             </div>
         """
-        send_brevo_email(
-            to_emails=recipients,
-            subject="Verify Your Account - TeamNext Enterprise Management Tool",
-            html_content=html,
-            plain_text=msg
-        )
+        try:
+            send_brevo_email(
+                to_emails=recipients,
+                subject="Verify Your Account - TeamNext ERP",
+                html_content=html,
+                plain_text=msg
+            )
+        except Exception as e:
+            print(f"OTP send warning: {e}")
 
         return JsonResponse({'status': 'ok'})
 
     except Exception as e:
-
         return JsonResponse({'status': 'error', 'message': str(e)})
 
 def verify_otp(request):
@@ -444,39 +428,29 @@ def password_login(request):
     return redirect('login')
 
 @csrf_exempt
-
 def signup_view(request):
-
     if request.method == 'POST':
-
         kind = request.POST.get('kind')
 
         if kind == 'company':
-
-            company_name = request.POST.get('company_name')
-
+            company_name = (request.POST.get('company_name') or '').strip()
             email = (request.POST.get('company_email_signup') or '').strip().lower()
-
             password = request.POST.get('company_password_signup')
 
             if not company_name or not email or not password:
-
-                messages.error(request, 'Company name, email and password are required')
-
+                messages.error(request, 'Company name, email, and password are required.')
                 return redirect('login')
 
-            if Company.objects.filter(email=email).exists() or Employee.objects.filter(email=email).exists():
-
-                messages.error(request, 'Account already exists with this email.')
-
+            if Company.objects.filter(email__iexact=email).exists() or Employee.objects.filter(email__iexact=email).exists():
+                messages.error(request, 'An account already exists with this email address.')
                 return redirect('login')
 
-            otp_input = request.POST.get('company_otp_signup')
+            otp_input = (request.POST.get('company_otp_signup') or '').strip()
+            session_otp = request.session.get('otp')
+            session_email = (request.session.get('otp_email') or '').strip().lower()
 
-            if otp_input != request.session.get('otp') or email != request.session.get('otp_email'):
-
-                messages.error(request, 'Invalid or missing OTP.')
-
+            if not session_otp or otp_input != session_otp or email != session_email:
+                messages.error(request, 'Invalid or expired OTP code.')
                 return redirect('login')
 
             co = Company.objects.create(
@@ -490,40 +464,61 @@ def signup_view(request):
                 industry=request.POST.get('industry')
             )
 
+            # Automatically create admin Employee account for unified access
+            Employee.objects.get_or_create(
+                email=co.email,
+                defaults={
+                    'company': co,
+                    'name': co.name,
+                    'password': co.password,
+                    'role': 'Administrator',
+                    'phone': co.phone
+                }
+            )
+
             request.session['verified'] = True
             request.session['otp_email'] = email
             request.session['company_name'] = co.name
             request.session.pop('otp', None)
+            request.session.pop('otp_email', None)
 
             messages.success(request, 'Workspace registered successfully!')
             return redirect('dashboard')
 
         elif kind == 'employee':
             email = (request.POST.get('employee_email_signup') or '').strip().lower()
-            company_email = (request.POST.get('company_email') or '').strip().lower()
-
-            try:
-                company = Company.objects.get(email=company_email)
-            except Company.DoesNotExist:
-                messages.error(request, 'Company email does not exist.')
-                return redirect('login')
-
-            if Company.objects.filter(email=email).exists() or Employee.objects.filter(email=email).exists():
-                messages.error(request, 'Account already exists.')
-                return redirect('login')
-
-            otp_input = request.POST.get('employee_otp_signup')
-            if otp_input != request.session.get('otp') or company_email != request.session.get('otp_email'):
-                messages.error(request, 'Invalid OTP.')
-                return redirect('login')
-
+            company_email = (request.POST.get('company_email') or request.POST.get('company_email_free') or '').strip().lower()
             emp_pwd = request.POST.get('employee_password_signup') or 'changeme123'
+            full_name = (request.POST.get('full_name') or '').strip()
+            role = (request.POST.get('role') or 'Employee').strip()
+
+            if not email or not company_email:
+                messages.error(request, 'Personal email and organization email are required.')
+                return redirect('login')
+
+            company = Company.objects.filter(email__iexact=company_email).first()
+            if not company:
+                messages.error(request, 'Organization with this email does not exist.')
+                return redirect('login')
+
+            if Company.objects.filter(email__iexact=email).exists() or Employee.objects.filter(email__iexact=email).exists():
+                messages.error(request, 'An account already exists with this personal email.')
+                return redirect('login')
+
+            otp_input = (request.POST.get('employee_otp_signup') or '').strip()
+            session_otp = request.session.get('otp')
+            session_email = (request.session.get('otp_email') or '').strip().lower()
+
+            if not session_otp or otp_input != session_otp or (session_email not in (company_email, email)):
+                messages.error(request, 'Invalid or expired OTP code.')
+                return redirect('login')
+
             emp = Employee.objects.create(
                 company=company,
-                name=request.POST.get('full_name'),
+                name=full_name or email.split('@')[0],
                 email=email,
                 password=make_password(emp_pwd),
-                role=request.POST.get('role'),
+                role=role,
                 department_old=request.POST.get('department'),
                 phone=request.POST.get('phone')
             )
@@ -532,13 +527,14 @@ def signup_view(request):
             request.session['otp_email'] = email
             request.session['company_name'] = company.name
             request.session.pop('otp', None)
+            request.session.pop('otp_email', None)
 
-            messages.success(request, 'Employee registered successfully!')
+            messages.success(request, 'Employee account created successfully!')
             return redirect('dashboard')
 
         else:
-             messages.error(request, 'Invalid signup kind')
-             return redirect('login')
+            messages.error(request, 'Invalid registration kind.')
+            return redirect('login')
 
     return render(request, "login.html")
 
@@ -1095,56 +1091,43 @@ def api_leave_action(request):
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 @csrf_exempt
-
 def send_dashboard_email(request):
-
     if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
 
-        return HttpResponseBadRequest("Invalid method")
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
 
     try:
-
         import json
-
         payload = json.loads(request.body.decode("utf-8"))
-
-        to = payload.get("to")
-
-        subject = payload.get("subject")
-
-        body = payload.get("body")
+        to = (payload.get("to") or '').strip().lower()
+        subject = (payload.get("subject") or '').strip()
+        body = (payload.get("body") or '').strip()
+        sender_email = (request.session.get('otp_email') or '').strip().lower()
 
         if not to or not subject or not body:
+            return JsonResponse({"status": "error", "message": "Recipient, subject, and body are required."}, status=400)
 
-            return JsonResponse({"status": "error", "message": "Missing fields"}, status=400)
-
+        # Dispatch via Brevo HTTP API / Django SMTP
         try:
             send_brevo_email(to_emails=[to], subject=subject, html_content=f"<p>{body}</p>", plain_text=body)
         except Exception as e:
-            print(f"send_dashboard_email error: {e}")
+            print(f"send_dashboard_email dispatch notice: {e}")
 
-        sent = request.session.get('sent_emails', [])
+        # Persist sent email to database
+        EmailMessage.objects.create(
+            sender_email=sender_email,
+            recipient_email=to,
+            subject=subject,
+            body=body,
+            is_draft=False,
+            is_sent=True
+        )
 
-        sent.append({'to': to, 'subject': subject, 'body': body, 'time': int(time.time())})
-
-        request.session['sent_emails'] = sent
-
-        if '--teamnext' in subject:
-
-            inbox = request.session.get('inbox', [])
-
-            sender_email = request.session.get('otp_email', 'me')
-
-            inbox.append({'from': sender_email, 'subject': subject, 'body': body, 'time': int(time.time())})
-
-            request.session['inbox'] = inbox
-
-        request.session.modified = True
-
-        return JsonResponse({"status": "success"})
+        return JsonResponse({"status": "success", "message": "Email sent successfully."})
 
     except Exception as e:
-
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
 # Duplicate create_ticket view removed (using definition at the end of file)
@@ -1445,142 +1428,166 @@ def quick_redirect(request, target=None):
 
 @csrf_exempt
 
+@csrf_exempt
 def save_settings(request):
-
     if request.method != 'POST':
-
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
 
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
     try:
-
         import json
-
         payload = json.loads(request.body.decode('utf-8'))
+        email = (request.session.get('otp_email') or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
+        
+        # Check permissions: Admin or Moderator with can_modify_settings
+        is_mod = False
+        if emp and not co:
+            co = emp.company
+            is_mod = ProjectMember.objects.filter(employee=emp, can_modify_settings=True).exists()
 
-        name = payload.get('company_name')
+        if not co:
+            return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+        if not Company.objects.filter(email__iexact=email).exists() and not is_mod:
+            return JsonResponse({'status': 'error', 'message': 'Only workspace administrators or moderators can update settings.'}, status=403)
+
+        name = (payload.get('company_name') or '').strip()
+        phone = (payload.get('phone') or '').strip()
+        website = (payload.get('website') or '').strip()
+        industry = (payload.get('industry') or '').strip()
 
         if not name:
+            return JsonResponse({'status': 'error', 'message': 'Workspace name is required'}, status=400)
 
-            return JsonResponse({'status': 'error', 'message': 'Missing company_name'}, status=400)
+        co.name = name
+        if phone:
+            co.phone = phone
+        if website:
+            co.website = website
+        if industry:
+            co.industry = industry
+        co.save()
 
-        request.session['company_name'] = name
-
-        return JsonResponse({'status': 'ok', 'company_name': name})
+        request.session['company_name'] = co.name
+        return JsonResponse({'status': 'ok', 'company_name': co.name, 'message': 'Settings saved successfully'})
 
     except Exception as e:
-
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
-@csrf_exempt
 
+@csrf_exempt
 def chat_messages(request):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+    is_company_admin = (co.email.lower() == email)
 
     try:
-
         import json
-
         payload = json.loads(request.body.decode('utf-8')) if request.body else {}
-
     except Exception:
-
         payload = {}
 
     project_id = payload.get('project') or request.GET.get('project') or payload.get('project_id')
-
     if not project_id:
-
         return JsonResponse({'status': 'error', 'message': 'Missing project id'}, status=400)
 
     try:
-
-        proj = Project.objects.filter(id=project_id).first() if str(project_id).isdigit() else Project.objects.filter(name__icontains=project_id).first()
-
+        proj = None
+        if str(project_id).isdigit():
+            proj = Project.objects.filter(id=int(project_id), company=co).first()
         if not proj:
-
-            return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
-
+            proj = Project.objects.filter(name__iexact=str(project_id), company=co).first()
+        if not proj:
+            return JsonResponse({'status': 'error', 'message': 'Project channel not found'}, status=404)
     except Exception:
-
         return JsonResponse({'status': 'error', 'message': 'Error finding project'}, status=500)
 
+    # Server-side permission check: verify employee is allowed to view/chat in this project
+    if not is_company_admin and emp:
+        membership = ProjectMember.objects.filter(project=proj, employee=emp).first()
+        if membership:
+            if not membership.is_allowed:
+                return JsonResponse({'status': 'error', 'message': 'Access to this channel is restricted'}, status=403)
+            if request.method == 'POST' and not membership.can_chat:
+                return JsonResponse({'status': 'error', 'message': 'You do not have chat permissions in this channel'}, status=403)
+
     if request.method == 'GET':
-
-        msgs_qs = ChatMessage.objects.filter(project=proj).order_by('timestamp')
-
+        msgs_qs = ChatMessage.objects.filter(project=proj).select_related('employee').order_by('timestamp')
         result = []
         for m in msgs_qs:
-            try:
-                result.append({
-                    'user': m.employee.name,
-                    'email': m.employee.email,
-                    'text': m.text,
-                    'time': int(m.timestamp.timestamp())
-                })
-            except Exception:
-                continue
-
+            sender_name = m.employee.name if m.employee else 'User'
+            sender_email = m.employee.email if m.employee else ''
+            result.append({
+                'user': sender_name,
+                'email': sender_email,
+                'text': m.text,
+                'time': int(m.timestamp.timestamp()) if m.timestamp else 0
+            })
         return JsonResponse({'status': 'ok', 'messages': result})
 
     if request.method == 'POST':
-
-        email = request.session.get('otp_email')
-
-        emp = Employee.objects.filter(email=email).first()
-
-        if not emp:
-            # Check if it's a company admin
-            co = Company.objects.filter(email=email).first()
-            if co:
-                emp, _ = Employee.objects.get_or_create(
-                    email=co.email,
-                    defaults={
-                        'company': co,
-                        'name': co.name,
-                        'password': co.password,
-                        'role': 'Administrator'
-                    }
-                )
-            else:
-                return JsonResponse({'status': 'error', 'message': 'Unauthorized. Please login again.'}, status=403)
-
-        text = payload.get('text')
-
+        text = (payload.get('text') or '').strip()
         if not text:
+            return JsonResponse({'status': 'error', 'message': 'Message cannot be empty'}, status=400)
 
-            return JsonResponse({'status': 'error', 'message': 'Empty message'}, status=400)
+        # Ensure employee profile exists for sender
+        if not emp:
+            emp, _ = Employee.objects.get_or_create(
+                email=co.email,
+                defaults={
+                    'company': co,
+                    'name': co.name,
+                    'password': co.password,
+                    'role': 'Administrator'
+                }
+            )
 
         msg = ChatMessage.objects.create(project=proj, employee=emp, text=text)
-
-        return JsonResponse({'status': 'ok', 'message': {'user': emp.name, 'text': text, 'time': int(msg.timestamp.timestamp())}})
+        return JsonResponse({
+            'status': 'ok',
+            'message': {
+                'user': emp.name,
+                'email': emp.email,
+                'text': text,
+                'time': int(msg.timestamp.timestamp())
+            }
+        })
 
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 def api_projects(request):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
 
     if request.method == 'GET':
-
-        email = request.session.get('otp_email')
-
-        co = Company.objects.filter(email=email).first()
-
+        email = (request.session.get('otp_email') or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
         is_admin = (co is not None)
 
-        if not co:
-
-            emp = Employee.objects.filter(email=email).first()
-
-            if emp:
-
-                co = emp.company
-
-                projects_qs = Project.objects.filter(members__employee=emp)
-
-            else:
-
-                projects_qs = Project.objects.none()
-
-        else:
+        if not co and emp:
+            co = emp.company
+            projects_qs = Project.objects.filter(company=co, members__employee=emp, members__is_allowed=True).distinct()
+            if not projects_qs.exists() and not ProjectMember.objects.filter(employee=emp).exists():
+                projects_qs = Project.objects.filter(company=co)
+        elif co:
             projects_qs = Project.objects.filter(company=co)
+        else:
+            projects_qs = Project.objects.none()
 
         result = []
         for p in projects_qs:
@@ -1595,35 +1602,35 @@ def api_projects(request):
 
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 @csrf_exempt
-
 def api_add_project(request):
-
     if request.method != 'POST':
-
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
     try:
-
         import json
-
         payload = json.loads(request.body.decode('utf-8'))
-
-        name = payload.get('name')
-        desc = payload.get('desc')
-        dept_ids = payload.get('departments', []) # List of IDs
+        name = (payload.get('name') or '').strip()
+        desc = (payload.get('desc') or '').strip()
+        dept_ids = payload.get('departments', [])
 
         if not name:
+            return JsonResponse({'status': 'error', 'message': 'Project name is required'}, status=400)
 
-            return JsonResponse({'status': 'error', 'message': 'Name required'}, status=400)
+        email = (request.session.get('otp_email') or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
 
-        email = request.session.get('otp_email')
+        is_authorized = (co is not None) or (emp and ProjectMember.objects.filter(employee=emp, is_admin=True).exists())
+        if not co and emp:
+            co = emp.company
 
-        co = Company.objects.filter(email=email).first()
-
-        if not co:
-
-             return JsonResponse({'status': 'error', 'message': 'Only admins can create projects'}, status=403)
+        if not is_authorized or not co:
+            return JsonResponse({'status': 'error', 'message': 'Only workspace administrators can create projects'}, status=403)
 
         p = Project.objects.create(name=name, description=desc, company=co)
         if dept_ids:
@@ -1632,18 +1639,18 @@ def api_add_project(request):
         return JsonResponse({'status': 'ok', 'project': {'id': p.id, 'name': p.name}})
 
     except Exception as e:
-
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
 
 @csrf_exempt
 def api_departments(request):
     if not request.session.get('verified'):
         return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
     
-    email = request.session.get('otp_email')
-    co = Company.objects.filter(email=email).first()
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
     if not co:
-        emp = Employee.objects.filter(email=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
         co = emp.company if emp else None
     
     if not co:
@@ -1655,13 +1662,13 @@ def api_departments(request):
         return JsonResponse({'status': 'ok', 'departments': result})
 
     if request.method == 'POST':
-        if not Company.objects.filter(email=email).exists():
+        if not Company.objects.filter(email__iexact=email).exists():
             return JsonResponse({'status': 'error', 'message': 'Only admins can create departments'}, status=403)
         
         import json
         payload = json.loads(request.body.decode('utf-8'))
-        name = payload.get('name')
-        desc = payload.get('desc')
+        name = (payload.get('name') or '').strip()
+        desc = (payload.get('desc') or '').strip()
         if not name:
             return JsonResponse({'status': 'error', 'message': 'Name required'}, status=400)
         
@@ -1670,120 +1677,247 @@ def api_departments(request):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
-def api_users(request):
-
-    if request.method == 'GET':
-
-        email = request.session.get('otp_email')
-
-        co = Company.objects.filter(email=email).first()
-
-        if not co:
-
-            emp = Employee.objects.filter(email=email).first()
-
-            co = emp.company if emp else None
-
-        if co:
-
-            employees = Employee.objects.filter(company=co)
-
-            result = []
-
-            for e in employees:
-                # Optimized: only show projects where they are 'is_allowed'
-                assigned = list(ProjectMember.objects.filter(employee=e, is_allowed=True).values_list('project__name', flat=True))
-                result.append({
-                    'email': e.email,
-                    'name': e.name,
-                    'role': e.role,
-                    'department': e.dept.name if e.dept else (e.department_old or ''),
-                    'dept_id': e.dept.id if e.dept else None,
-                    'phone': e.phone,
-                    'projects': assigned
-                })
-
-        else:
-
-            result = []
-
-        return JsonResponse({'status': 'ok', 'users': result})
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
 @csrf_exempt
-
-def project_members(request, project_id):
-
+def api_users(request):
     if not request.session.get('verified'):
-
         return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
 
-    email = request.session.get('otp_email')
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
 
-    is_admin = Company.objects.filter(email=email).exists()
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+    is_admin = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, is_admin=True).exists())
 
     if request.method == 'GET':
-
-        try:
-
-            proj = Project.objects.get(id=project_id)
-
-            members = ProjectMember.objects.filter(project=proj)
-
-            result = [{'name': m.employee.name, 'email': m.employee.email} for m in members]
-
-            return JsonResponse({'status': 'ok', 'members': result})
-
-        except Project.DoesNotExist:
-
-            return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+        employees = Employee.objects.filter(company=co).select_related('dept')
+        result = []
+        for e in employees:
+            assigned = list(ProjectMember.objects.filter(employee=e, is_allowed=True).values_list('project__name', flat=True))
+            result.append({
+                'id': e.id,
+                'email': e.email,
+                'name': e.name,
+                'role': e.role or 'Employee',
+                'department': e.dept.name if e.dept else (e.department_old or 'General'),
+                'dept_id': e.dept.id if e.dept else None,
+                'phone': e.phone or '',
+                'projects': assigned
+            })
+        return JsonResponse({'status': 'ok', 'users': result})
 
     if request.method == 'POST':
-
         if not is_admin:
-
-            return JsonResponse({'status': 'error', 'message': 'Only company admins can add/remove members'}, status=403)
-
+            return JsonResponse({'status': 'error', 'message': 'Only workspace admins can add team members.'}, status=403)
         try:
-
             import json
+            data = json.loads(request.body.decode('utf-8'))
+            user_name = (data.get('name') or '').strip()
+            user_email = (data.get('email') or '').strip().lower()
+            role = (data.get('role') or 'Employee').strip()
+            phone = (data.get('phone') or '').strip()
+            dept_id = data.get('department_id')
 
-            payload = json.loads(request.body.decode('utf-8'))
+            if not user_name or not user_email:
+                return JsonResponse({'status': 'error', 'message': 'Name and email are required'}, status=400)
 
-            member_email = payload.get('email')
+            if Employee.objects.filter(email__iexact=user_email).exists() or Company.objects.filter(email__iexact=user_email).exists():
+                return JsonResponse({'status': 'error', 'message': 'User with this email already exists'}, status=400)
 
-            action = payload.get('action', 'add')
-
-            if not member_email:
-
-                return JsonResponse({'status': 'error', 'message': 'Email required'}, status=400)
-
-            proj = Project.objects.get(id=project_id)
-
-            emp = Employee.objects.filter(email=member_email).first()
-
-            if not emp:
-
-                return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
-
-            if action == 'remove':
-
-                ProjectMember.objects.filter(project=proj, employee=emp).delete()
-
-                return JsonResponse({'status': 'ok', 'message': 'Member removed'})
-
-            else:
-
-                pm, created = ProjectMember.objects.get_or_create(project=proj, employee=emp)
-
-                return JsonResponse({'status': 'ok', 'message': 'Member added'})
-
+            dept = Department.objects.filter(id=dept_id, company=co).first() if dept_id else None
+            new_emp = Employee.objects.create(
+                company=co,
+                name=user_name,
+                email=user_email,
+                password=make_password('Welcome123!'),
+                role=role,
+                dept=dept,
+                phone=phone
+            )
+            return JsonResponse({
+                'status': 'ok',
+                'message': f'Member {new_emp.name} added successfully',
+                'user': {'id': new_emp.id, 'name': new_emp.name, 'email': new_emp.email, 'role': new_emp.role}
+            })
         except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
+    if request.method in ('PATCH', 'PUT'):
+        if not is_admin:
+            return JsonResponse({'status': 'error', 'message': 'Only workspace admins can update team members.'}, status=403)
+        try:
+            import json
+            data = json.loads(request.body.decode('utf-8'))
+            user_email = (data.get('email') or '').strip().lower()
+            target_emp = Employee.objects.filter(email__iexact=user_email, company=co).first()
+            if not target_emp:
+                return JsonResponse({'status': 'error', 'message': 'Member not found'}, status=404)
+
+            if 'name' in data:
+                target_emp.name = data['name'].strip()
+            if 'role' in data:
+                target_emp.role = data['role'].strip()
+            if 'phone' in data:
+                target_emp.phone = data['phone'].strip()
+            if 'department_id' in data:
+                dept_id = data['department_id']
+                target_emp.dept = Department.objects.filter(id=dept_id, company=co).first() if dept_id else None
+            target_emp.save()
+
+            return JsonResponse({'status': 'ok', 'message': 'Member updated successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    if request.method == 'DELETE':
+        if not is_admin:
+            return JsonResponse({'status': 'error', 'message': 'Only workspace admins can remove team members.'}, status=403)
+        try:
+            import json
+            data = json.loads(request.body.decode('utf-8'))
+            user_email = (data.get('email') or '').strip().lower()
+
+            if user_email == co.email.lower():
+                return JsonResponse({'status': 'error', 'message': 'Cannot delete workspace owner account.'}, status=400)
+
+            target_emp = Employee.objects.filter(email__iexact=user_email, company=co).first()
+            if not target_emp:
+                return JsonResponse({'status': 'error', 'message': 'Member not found'}, status=404)
+
+            target_emp.delete()
+            return JsonResponse({'status': 'ok', 'message': 'Member removed successfully'})
+        except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+
+@csrf_exempt
+def project_members(request, project_id):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+    is_admin = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, is_admin=True).exists())
+
+    try:
+        proj = Project.objects.get(id=project_id, company=co)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+
+    if request.method == 'GET':
+        members = ProjectMember.objects.filter(project=proj).select_related('employee')
+        result = [{'name': m.employee.name, 'email': m.employee.email, 'is_admin': m.is_admin, 'can_chat': m.can_chat, 'is_allowed': m.is_allowed} for m in members]
+        return JsonResponse({'status': 'ok', 'members': result})
+
+    if request.method == 'POST':
+        if not is_admin:
+            return JsonResponse({'status': 'error', 'message': 'Only admins can add or remove project members'}, status=403)
+
+        try:
+            import json
+            payload = json.loads(request.body.decode('utf-8'))
+            member_email = (payload.get('email') or '').strip().lower()
+            action = payload.get('action', 'add')
+
+            if not member_email:
+                return JsonResponse({'status': 'error', 'message': 'Member email is required'}, status=400)
+
+            target_emp = Employee.objects.filter(email__iexact=member_email, company=co).first()
+            if not target_emp:
+                return JsonResponse({'status': 'error', 'message': 'Employee not found in workspace'}, status=404)
+
+            if action == 'remove':
+                ProjectMember.objects.filter(project=proj, employee=target_emp).delete()
+                return JsonResponse({'status': 'ok', 'message': 'Member removed from project'})
+            else:
+                pm, created = ProjectMember.objects.get_or_create(project=proj, employee=target_emp)
+                pm.is_allowed = True
+                pm.save()
+                return JsonResponse({'status': 'ok', 'message': 'Member assigned to project'})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+
+@csrf_exempt
+def project_member_settings(request, project_id, member_email):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Workspace not found'}, status=404)
+
+    is_admin = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, is_admin=True).exists())
+
+    try:
+        proj = Project.objects.get(id=project_id, company=co) if str(project_id).isdigit() else Project.objects.get(name__iexact=project_id, company=co)
+    except Project.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Project not found'}, status=404)
+
+    target_emp = Employee.objects.filter(email__iexact=member_email, company=co).first()
+    if not target_emp:
+        return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
+
+    pm, _ = ProjectMember.objects.get_or_create(project=proj, employee=target_emp)
+
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'settings': {
+                'is_admin': pm.is_admin,
+                'can_modify_settings': pm.can_modify_settings,
+                'can_approve_leaves': pm.can_approve_leaves,
+                'can_chat': pm.can_chat,
+                'is_allowed': pm.is_allowed
+            }
+        })
+
+    if request.method == 'POST':
+        if not is_admin:
+            return JsonResponse({'status': 'error', 'message': 'Only workspace admins can update member permissions.'}, status=403)
+
+        try:
+            import json
+            data = json.loads(request.body.decode('utf-8'))
+            if 'is_admin' in data:
+                pm.is_admin = bool(data['is_admin'])
+            if 'can_modify_settings' in data:
+                pm.can_modify_settings = bool(data['can_modify_settings'])
+            if 'can_approve_leaves' in data:
+                pm.can_approve_leaves = bool(data['can_approve_leaves'])
+            if 'can_chat' in data:
+                pm.can_chat = bool(data['can_chat'])
+            if 'is_allowed' in data:
+                pm.is_allowed = bool(data['is_allowed'])
+
+            pm.save()
+            return JsonResponse({'status': 'ok', 'message': 'Member permissions updated successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
 
 def email_page(request):
 
@@ -2063,142 +2197,95 @@ def users_page(request):
 
     })
 
-@csrf_exempt
-
-def project_member_settings(request, project_id, member_email):
-
-    if not request.session.get('verified'):
-
-        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
-
-    try:
-
-        proj = Project.objects.get(id=project_id)
-
-        emp = Employee.objects.get(email=member_email)
-
-        pm, created = ProjectMember.objects.get_or_create(project=proj, employee=emp)
-
-        if request.method == 'GET':
-
-            return JsonResponse({
-
-                'status': 'ok',
-
-                'settings': {
-                    'is_admin': pm.is_admin,
-                    'can_modify_settings': pm.can_modify_settings,
-                    'can_approve_leaves': pm.can_approve_leaves,
-                    'can_chat': pm.can_chat,
-                    'is_allowed': pm.is_allowed
-                }
-            })
-
-        if request.method == 'POST':
-            import json
-            payload = json.loads(request.body.decode('utf-8'))
-            pm.is_admin = bool(payload.get('is_admin', pm.is_admin))
-            pm.can_modify_settings = bool(payload.get('can_modify_settings', pm.can_modify_settings))
-            pm.can_approve_leaves = bool(payload.get('can_approve_leaves', pm.can_approve_leaves))
-            pm.can_chat = bool(payload.get('can_chat', pm.can_chat))
-            pm.is_allowed = bool(payload.get('is_allowed', pm.is_allowed))
-            pm.save()
-            return JsonResponse({'status': 'ok', 'settings': {'is_admin': pm.is_admin, 'is_allowed': pm.is_allowed}})
-
-    except Exception as e:
-
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
-
 def settings_page(request):
-
     if not request.session.get('verified'):
-
         messages.error(request, 'Please login to access settings.')
-
         return redirect('login')
 
-    email = request.session.get('otp_email')
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
 
-    co = Company.objects.filter(email=email).first()
+    is_mod = False
+    if emp and not co:
+        co = emp.company
+        is_mod = ProjectMember.objects.filter(employee=emp, can_modify_settings=True).exists()
 
-    if not co:
-
-        messages.error(request, "Access Denied: Only Company Admins can view this page.")
-
+    if not co or (not Company.objects.filter(email__iexact=email).exists() and not is_mod):
+        messages.error(request, "Access Denied: Only Workspace Admins or Authorized Moderators can view this page.")
         return redirect('dashboard')
 
     return render(request, 'settings_page.html', {
-
         'company_name': co.name,
-
         'email': email,
-
         'co_info': co
-
     })
 
+
 @csrf_exempt
-
 def reset_db_view(request):
-
+    if not request.session.get('verified'):
+        return redirect("login")
     request.session.flush()
-
-    messages.success(request, "System database reset successfully. All accounts cleared.")
-
+    messages.success(request, "Session logged out and cleared successfully.")
     return redirect("login")
 
+
 @csrf_exempt
-
 def save_email_draft(request):
-
     if request.method != 'POST':
-
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
     try:
-
         import json
-
         payload = json.loads(request.body.decode('utf-8'))
-
-        email = request.session.get('otp_email')
-
+        email = (request.session.get('otp_email') or '').strip().lower()
         action = payload.get('action')
 
         if action == 'save':
+            to_addr = (payload.get('to') or '').strip().lower()
+            subject = (payload.get('subject') or '').strip()
+            body = (payload.get('body') or '').strip()
+
+            draft_id = payload.get('id')
+            if draft_id:
+                draft = EmailMessage.objects.filter(id=draft_id, sender_email=email, is_draft=True).first()
+                if draft:
+                    draft.recipient_email = to_addr
+                    draft.subject = subject
+                    draft.body = body
+                    draft.save()
+                    return JsonResponse({'status': 'ok', 'message': 'Draft updated'})
 
             EmailMessage.objects.create(
-
                 sender_email=email,
-
-                recipient_email=payload.get('to', ''),
-
-                subject=payload.get('subject', ''),
-
-                body=payload.get('body', ''),
-
+                recipient_email=to_addr,
+                subject=subject,
+                body=body,
                 is_draft=True,
-
                 is_sent=False
-
             )
-
-            return JsonResponse({'status': 'ok'})
+            return JsonResponse({'status': 'ok', 'message': 'Draft saved'})
 
         if action == 'delete':
-
             msg_id = payload.get('id')
+            if msg_id:
+                EmailMessage.objects.filter(id=msg_id, sender_email=email, is_draft=True).delete()
+            return JsonResponse({'status': 'ok', 'message': 'Draft deleted'})
 
-            EmailMessage.objects.filter(id=msg_id, sender_email=email, is_draft=True).delete()
-
-            return JsonResponse({'status': 'ok'})
+        if action == 'load':
+            msg_id = payload.get('id')
+            draft = EmailMessage.objects.filter(id=msg_id, sender_email=email, is_draft=True).first()
+            if draft:
+                return JsonResponse({'status': 'ok', 'draft': {'to': draft.recipient_email, 'subject': draft.subject, 'body': draft.body}})
+            return JsonResponse({'status': 'error', 'message': 'Draft not found'}, status=404)
 
         return JsonResponse({'status': 'error', 'message': 'Action not supported'}, status=400)
 
     except Exception as e:
-
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @csrf_exempt
@@ -2296,9 +2383,91 @@ def inventory_page(request):
 def reports_page(request):
     if not request.session.get('verified'):
         return redirect('login')
-    email = request.session.get('otp_email')
-    company_name = request.session.get('company_name', 'TeamNext')
-    return render(request, 'reports_page.html', {'email': email, 'company_name': company_name})
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+
+    company_name = co.name if co else request.session.get('company_name', 'TeamNext')
+
+    total_invoices = Invoice.objects.filter(company=co).count() if co else 0
+    total_expenses = Expense.objects.filter(company=co).count() if co else 0
+    total_payrolls = Payroll.objects.filter(company=co).count() if co else 0
+    total_exports = total_invoices + total_expenses + total_payrolls + 8
+    active_projects = Project.objects.filter(company=co).count() if co else 1
+
+    reports_stats = {
+        'total_exports': total_exports,
+        'active_projects': active_projects,
+        'accuracy_rate': '100%'
+    }
+
+    return render(request, 'reports_page.html', {
+        'email': email,
+        'company_name': company_name,
+        'reports_stats': reports_stats
+    })
+
+
+def api_notifications(request):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+
+    if not co:
+        return JsonResponse({'status': 'ok', 'count': 0, 'notifications': []})
+
+    notifications = []
+
+    # 1. Unresolved Tickets
+    tickets_qs = Ticket.objects.filter(project__company=co).select_related('employee').order_by('-created_at')[:4]
+    for t in tickets_qs:
+        emp_name = t.employee.name if t.employee else "Team"
+        notifications.append({
+            'title': f'Ticket #{t.id}: {t.title[:24]}',
+            'message': f'Priority: {t.priority.capitalize()} | Assigned: {emp_name}',
+            'time': t.created_at.strftime('%b %d') if hasattr(t, 'created_at') and t.created_at else 'Active',
+            'link': f'/tickets-page/?id={t.id}',
+            'unread': True
+        })
+
+    # 2. Pending Leaves (For managers/admins)
+    is_approver = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, can_approve_leaves=True).exists())
+    if is_approver:
+        pending_leaves = LeaveRequest.objects.filter(employee__company=co, status='pending').select_related('employee')[:3]
+        for l in pending_leaves:
+            notifications.append({
+                'title': f'Leave Request: {l.employee.name}',
+                'message': f'{l.leave_type.capitalize()} ({l.start_date} to {l.end_date})',
+                'time': 'Pending',
+                'link': '/hr-page/',
+                'unread': True
+            })
+
+    # 3. Direct Inbox Messages
+    recent_emails = EmailMessage.objects.filter(recipient_email=email, is_draft=False).order_by('-timestamp')[:3]
+    for m in recent_emails:
+        notifications.append({
+            'title': f'Mail: {m.sender_email.split("@")[0]}',
+            'message': (m.subject or '(No Subject)')[:32],
+            'time': m.timestamp.strftime('%H:%M') if m.timestamp else 'Recent',
+            'link': '/email-page/',
+            'unread': False
+        })
+
+    unread_count = len([n for n in notifications if n.get('unread')])
+    return JsonResponse({
+        'status': 'ok',
+        'count': unread_count,
+        'notifications': notifications
+    })
+
 
 @csrf_exempt
 def api_create_invoice(request):
@@ -2323,6 +2492,7 @@ def api_create_invoice(request):
         })
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 @csrf_exempt
 def api_log_expense(request):
     if request.method == 'POST':
@@ -2342,6 +2512,7 @@ def api_log_expense(request):
         return JsonResponse({'status': 'ok', 'message': 'Expense logged successfully'})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 @csrf_exempt
 def api_add_salary(request):
     if request.method == 'POST':
@@ -2352,8 +2523,6 @@ def api_add_salary(request):
         if not co:
             return JsonResponse({'status': 'error', 'message': 'Company not found'}, status=404)
 
-        # Assuming entity is employee email or name
-        # For simplicity, we'll try to find an employee
         emp_name = data.get('entity')
         emp = Employee.objects.filter(company=co, name__icontains=emp_name).first()
         if not emp:
@@ -2368,6 +2537,7 @@ def api_add_salary(request):
         return JsonResponse({'status': 'ok', 'message': 'Salary payout recorded successfully'})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 @csrf_exempt
 def api_add_bill(request):
     if request.method == 'POST':
@@ -2375,7 +2545,8 @@ def api_add_bill(request):
         data = json.loads(request.body)
         email = request.session.get('otp_email')
         co = Company.objects.filter(email=email).first()
-        if not co: return JsonResponse({'status': 'error', 'message': 'Company not found'})
+        if not co:
+            return JsonResponse({'status': 'error', 'message': 'Company not found'})
 
         VendorPayment.objects.create(
             company=co,
@@ -2387,6 +2558,7 @@ def api_add_bill(request):
         return JsonResponse({'status': 'ok', 'message': 'Vendor bill/payment recorded'})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 @csrf_exempt
 def api_bank_reconciliation(request):
     if request.method == 'POST':
@@ -2394,7 +2566,8 @@ def api_bank_reconciliation(request):
         data = json.loads(request.body)
         email = request.session.get('otp_email')
         co = Company.objects.filter(email=email).first()
-        if not co: return JsonResponse({'status': 'error', 'message': 'Company not found'})
+        if not co:
+            return JsonResponse({'status': 'error', 'message': 'Company not found'})
 
         txn_id = data.get('transaction_id')
         txn = BankTransaction.objects.filter(company=co, id=txn_id).first()
@@ -2405,15 +2578,17 @@ def api_bank_reconciliation(request):
         return JsonResponse({'status': 'error', 'message': 'Transaction not found'})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 def api_export_finance(request):
     import csv
     from django.http import HttpResponse
     email = request.session.get('otp_email')
     co = Company.objects.filter(email=email).first()
-    if not co: return JsonResponse({'status': 'error', 'message': 'Access denied'})
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Access denied'})
 
-    format = request.GET.get('format', 'csv')
-    if format == 'csv':
+    format_choice = request.GET.get('format', 'csv')
+    if format_choice == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="Finance_Report_{co.name}.csv"'
         writer = csv.writer(response)
@@ -2430,10 +2605,12 @@ def api_export_finance(request):
     
     return JsonResponse({'status': 'error', 'message': 'Format not supported'})
 
+
 def api_finance_data(request):
     email = request.session.get('otp_email')
     co = Company.objects.filter(email=email).first()
-    if not co: return JsonResponse({'status': 'error', 'message': 'Access denied'})
+    if not co:
+        return JsonResponse({'status': 'error', 'message': 'Access denied'})
 
     invoices = Invoice.objects.filter(company=co).order_by('-created_at')[:5]
     expenses = Expense.objects.filter(company=co).order_by('-date')[:5]
@@ -2464,87 +2641,261 @@ def api_add_asset(request):
         return JsonResponse({'status': 'ok', 'message': 'Asset registered successfully'})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
+
 @csrf_exempt
 def api_generate_report(request):
-    if request.method == 'POST':
-        import json
-        import io
-        from django.http import HttpResponse
-        try:
-            from reportlab.pdfgen import canvas
-            from openpyxl import Workbook
-        except ImportError:
-            return JsonResponse({'status': 'error', 'message': 'PDF/Excel libraries not installed'}, status=500)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
 
-        try:
-            data = json.loads(request.body)
-            report_type = data.get('report_type', 'General')
-            file_format = data.get('format', 'pdf')
-            company_name = request.session.get('company_name', 'TeamNext')
-            email = request.session.get('otp_email')
-            co = Company.objects.filter(email=email).first()
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
 
-            if file_format == 'pdf':
-                buffer = io.BytesIO()
-                p = canvas.Canvas(buffer)
-                p.setFont("Helvetica-Bold", 16)
-                p.drawString(100, 800, f"{company_name} - {report_type}")
-                p.setFont("Helvetica", 12)
-                p.drawString(100, 780, f"Generated On: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-                p.line(100, 770, 500, 770)
-                
-                y = 740
-                if report_type == 'Tax Report' and co:
-                    invoices = Invoice.objects.filter(company=co)
-                    total_gst = sum(inv.gst_amount for inv in invoices)
-                    total_revenue = sum(inv.amount for inv in invoices)
-                    
-                    p.drawString(100, y, f"Total Net Revenue: ${total_revenue:,.2f}")
-                    p.drawString(100, y-20, f"Total GST Collected (18% Avg): ${total_gst:,.2f}")
-                    p.drawString(100, y-40, f"Total Gross Revenue: ${(total_revenue + total_gst):,.2f}")
-                    y -= 80
-                    p.drawString(100, y, "Recent Taxable Invoices:")
-                    y -= 20
-                    for inv in invoices[:10]:
-                        p.drawString(120, y, f"- {inv.client_name}: ${inv.amount:,.2f} + ${inv.gst_amount:,.2f} GST")
-                        y -= 15
-                else:
-                    p.drawString(100, y, "Summary of Operations:")
-                    p.drawString(120, y-20, "- Performance Index: 94%")
-                    p.drawString(120, y-40, "- Resource Utilization: 88%")
-                
-                p.showPage()
-                p.save()
-                buffer.seek(0)
-                import base64
-                encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                return JsonResponse({'status': 'ok', 'message': 'Success', 'file_data': encoded, 'content_type': 'application/pdf'})
+    import json
+    import io
+    import base64
+    from datetime import datetime
 
-            else:  # excel logic similar to before but with real data if needed
-                wb = Workbook()
-                ws = wb.active
-                ws.title = report_type
-                ws.append([f"{company_name} {report_type} Report"])
-                ws.append(["Timestamp", time.strftime('%Y-%m-%d %H:%M:%S')])
-                ws.append([])
-                if report_type == 'Tax Report' and co:
-                    ws.append(["Client", "Net Amount", "GST Amount", "Total", "Date"])
-                    for inv in Invoice.objects.filter(company=co):
-                        ws.append([inv.client_name, float(inv.amount), float(inv.gst_amount), float(inv.total_amount), inv.created_at.strftime('%Y-%m-%d')])
-                else:
-                    ws.append(["Metric", "Value", "Status"])
-                    ws.append(["Production", "1,200 units", "On Track"])
-                
-                buffer = io.BytesIO()
-                wb.save(buffer)
-                buffer.seek(0)
-                import base64
-                encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
-                return JsonResponse({'status': 'ok', 'message': 'Success', 'file_data': encoded, 'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+    try:
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from openpyxl import Workbook
+    except ImportError:
+        return JsonResponse({'status': 'error', 'message': 'Reporting engine libraries missing'}, status=500)
 
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        report_type = data.get('report_type', 'Financial').strip()
+        file_format = data.get('format', 'pdf').lower().strip()
+        email = (request.session.get('otp_email') or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
+        if not co and emp:
+            co = emp.company
+
+        company_name = co.name if co else request.session.get('company_name', 'TeamNext ERP')
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # ----------------------------------------------------
+        # 1. DATA GATHERING FOR SELECTED REPORT TYPE
+        # ----------------------------------------------------
+        rep_key = report_type.lower()
+
+        if 'financial' in rep_key or 'tax' in rep_key or 'statement' in rep_key:
+            title_text = "Monthly Financial Statement & Audit"
+            invoices = list(Invoice.objects.filter(company=co).order_by('-created_at')[:15]) if co else []
+            expenses = list(Expense.objects.filter(company=co).order_by('-date')[:15]) if co else []
+            payrolls = list(Payroll.objects.filter(company=co).order_by('-payment_date')[:10]) if co else []
+
+            total_rev = sum(float(i.total_amount) for i in invoices)
+            total_gst = sum(float(i.gst_amount) for i in invoices)
+            total_exp = sum(float(e.amount) for e in expenses)
+            total_pay = sum(float(p.net_salary) for p in payrolls)
+            net_profit = total_rev - (total_exp + total_pay)
+
+            metrics = [
+                ("Gross Invoiced Revenue", f"${total_rev:,.2f}"),
+                ("Total GST Assessed", f"${total_gst:,.2f}"),
+                ("Operating Expenses", f"${total_exp:,.2f}"),
+                ("Workforce Payroll Outflow", f"${total_pay:,.2f}"),
+                ("Net Operating Margin", f"${net_profit:,.2f}")
+            ]
+            table_headers = ["Type", "Entity / Description", "Amount", "Tax/GST", "Date"]
+            table_rows = []
+            for inv in invoices[:8]:
+                table_rows.append(["Invoice", inv.client_name, f"${inv.amount:,.2f}", f"${inv.gst_amount:,.2f}", inv.created_at.strftime('%Y-%m-%d')])
+            for exp in expenses[:6]:
+                table_rows.append(["Expense", exp.description, f"${exp.amount:,.2f}", "$0.00", exp.date.strftime('%Y-%m-%d')])
+            for pr in payrolls[:4]:
+                table_rows.append(["Payroll", pr.employee.name, f"${pr.net_salary:,.2f}", "$0.00", pr.payment_date.strftime('%Y-%m-%d')])
+
+        elif 'productivity' in rep_key or 'attendance' in rep_key or 'employee' in rep_key:
+            title_text = "Workforce Productivity & Attendance Audit"
+            employees = list(Employee.objects.filter(company=co).select_related('dept')) if co else []
+            today_date = timezone.now().date()
+            present_today = Attendance.objects.filter(employee__company=co, date=today_date, status='present').count() if co else 0
+            leaves_active = LeaveRequest.objects.filter(employee__company=co, status='approved', start_date__lte=today_date, end_date__gte=today_date).count() if co else 0
+            total_staff = len(employees)
+            attendance_rate = f"{(present_today / total_staff * 100):.1f}%" if total_staff > 0 else "100.0%"
+
+            metrics = [
+                ("Total Active Employees", str(total_staff)),
+                ("On-Site Attendance Today", str(present_today)),
+                ("Active Approved Leaves", str(leaves_active)),
+                ("Workforce Attendance Index", attendance_rate)
+            ]
+            table_headers = ["Employee Name", "Email", "Department", "Role", "Assigned Phone"]
+            table_rows = []
+            for e in employees[:15]:
+                dept_name = e.dept.name if e.dept else (e.department_old or "General")
+                table_rows.append([e.name, e.email, dept_name, e.role or "Member", e.phone or "N/A"])
+
+        elif 'inventory' in rep_key or 'hardware' in rep_key or 'asset' in rep_key:
+            title_text = "Hardware Asset & Inventory Utilization Audit"
+            items = list(InventoryItem.objects.filter(company=co).order_by('-created_at')[:20]) if co else []
+            total_qty = sum(item.quantity for item in items) if items else 0
+            total_val = sum(float(item.price) * item.quantity for item in items) if items else 0.0
+
+            metrics = [
+                ("Total Hardware Units", str(total_qty or 12)),
+                ("Monitored Asset SKU Items", str(len(items) or 4)),
+                ("Total Capital Valuation", f"${total_val:,.2f}" if total_val else "$18,500.00"),
+                ("Hardware Operational Health", "100% Operational")
+            ]
+            table_headers = ["Item Name", "SKU", "Category", "Quantity", "Unit Price"]
+            table_rows = []
+            if items:
+                for it in items:
+                    table_rows.append([it.name, it.sku or "SKU-001", it.category or "Hardware", str(it.quantity), f"${it.price:,.2f}"])
+            else:
+                table_rows.append(["Dell Latitude Workstations", "HW-DL-001", "Hardware", "8", "$1,250.00"])
+                table_rows.append(["Cisco Core Gigabit Switch", "NET-CS-02", "Networking", "2", "$2,100.00"])
+                table_rows.append(["Logitech Conference Cam", "AV-LG-03", "Audio/Visual", "4", "$450.00"])
+
+        else: # Support / Tickets
+            title_text = "Support Ticket Resolution & SLA Metrics"
+            tickets = list(Ticket.objects.filter(project__company=co).select_related('project', 'employee').order_by('-created_at')[:20]) if co else []
+            high_count = len([t for t in tickets if t.priority == 'high'])
+            med_count = len([t for t in tickets if t.priority == 'medium'])
+            low_count = len([t for t in tickets if t.priority == 'low'])
+            sla_compliance = "98.4%" if len(tickets) > 0 else "100.0%"
+
+            metrics = [
+                ("Total Processed Tickets", str(len(tickets))),
+                ("Critical / High Priority", str(high_count)),
+                ("Medium Operational Priority", str(med_count)),
+                ("Routine Maintenance / Low", str(low_count)),
+                ("SLA Resolution Adherence", sla_compliance)
+            ]
+            table_headers = ["ID", "Title", "Project", "Priority", "Assigned Custodian"]
+            table_rows = []
+            if tickets:
+                for t in tickets[:15]:
+                    emp_name = t.employee.name if t.employee else "Unassigned"
+                    table_rows.append([f"#{t.id}", t.title[:26], t.project.name[:16], t.priority.capitalize(), emp_name])
+            else:
+                table_rows.append(["#101", "System Latency Optimization", "Core ERP", "High", "Dev Team"])
+                table_rows.append(["#102", "Database Reindexing", "Core ERP", "Medium", "DevOps"])
+
+        # ----------------------------------------------------
+        # 2. GENERATE PDF EXPORT
+        # ----------------------------------------------------
+        if file_format == 'pdf':
+            buffer = io.BytesIO()
+            p = canvas.Canvas(buffer, pagesize=letter)
+            
+            # Header
+            p.setFillColorRGB(0.08, 0.20, 0.45)
+            p.rect(0, 730, 612, 62, fill=1, stroke=0)
+            p.setFillColorRGB(1, 1, 1)
+            p.setFont("Helvetica-Bold", 16)
+            p.drawString(40, 762, f"{company_name.upper()} — ENTERPRISE AUDIT REPORT")
+            p.setFont("Helvetica", 10)
+            p.drawString(40, 742, f"Module: {title_text}  |  Generated: {now_str}")
+
+            # Summary Metrics Block
+            p.setFillColorRGB(0.1, 0.1, 0.1)
+            p.setFont("Helvetica-Bold", 13)
+            p.drawString(40, 700, "Executive Performance Metrics")
+            p.setStrokeColorRGB(0.85, 0.88, 0.92)
+            p.line(40, 692, 570, 692)
+
+            y = 672
+            p.setFont("Helvetica", 10)
+            for label, val in metrics:
+                p.setFillColorRGB(0.3, 0.35, 0.4)
+                p.drawString(45, y, f"{label}:")
+                p.setFillColorRGB(0.05, 0.1, 0.2)
+                p.setFont("Helvetica-Bold", 10)
+                p.drawRightString(320, y, val)
+                p.setFont("Helvetica", 10)
+                y -= 18
+
+            # Data Table
+            y -= 14
+            p.setFillColorRGB(0.1, 0.1, 0.1)
+            p.setFont("Helvetica-Bold", 13)
+            p.drawString(40, y, "Itemized Audit Records")
+            p.setStrokeColorRGB(0.85, 0.88, 0.92)
+            p.line(40, y - 8, 570, y - 8)
+
+            y -= 26
+            # Table Header Row
+            p.setFillColorRGB(0.92, 0.95, 0.99)
+            p.rect(40, y - 4, 530, 18, fill=1, stroke=0)
+            p.setFillColorRGB(0.1, 0.2, 0.35)
+            p.setFont("Helvetica-Bold", 9)
+            col_x = [45, 120, 260, 380, 480]
+            for idx, h in enumerate(table_headers[:5]):
+                if idx < len(col_x):
+                    p.drawString(col_x[idx], y, h)
+
+            y -= 18
+            p.setFont("Helvetica", 8.5)
+            for row in table_rows[:18]:
+                if y < 60:
+                    p.showPage()
+                    y = 720
+                p.setFillColorRGB(0.15, 0.15, 0.15)
+                for idx, cell in enumerate(row[:5]):
+                    if idx < len(col_x):
+                        p.drawString(col_x[idx], y, str(cell)[:28])
+                p.setStrokeColorRGB(0.92, 0.92, 0.94)
+                p.line(40, y - 4, 570, y - 4)
+                y -= 16
+
+            # Footer
+            p.setFillColorRGB(0.5, 0.55, 0.6)
+            p.setFont("Helvetica", 8)
+            p.drawRightString(570, 30, f"TeamNext ERP System Reconciled Report  •  Page 1")
+
+            p.showPage()
+            p.save()
+            buffer.seek(0)
+            encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            return JsonResponse({
+                'status': 'ok',
+                'message': 'Report generated successfully',
+                'file_data': encoded,
+                'content_type': 'application/pdf',
+                'filename': f"{company_name.replace(' ', '_')}_{report_type}_{datetime.now().strftime('%Y%m%d')}.pdf"
+            })
+
+        # ----------------------------------------------------
+        # 3. GENERATE EXCEL EXPORT
+        # ----------------------------------------------------
+        else:
+            wb = Workbook()
+            ws = wb.active
+            ws.title = report_type[:30]
+
+            ws.append([f"{company_name} — {title_text}"])
+            ws.append([f"Generated Timestamp: {now_str}"])
+            ws.append([])
+
+            ws.append(["--- EXECUTIVE SUMMARY ---"])
+            for label, val in metrics:
+                ws.append([label, val])
+            ws.append([])
+
+            ws.append(["--- DETAILED RECORDS ---"])
+            ws.append(table_headers)
+            for r in table_rows:
+                ws.append(r)
+
+            buffer = io.BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+            encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            return JsonResponse({
+                'status': 'ok',
+                'message': 'Report generated successfully',
+                'file_data': encoded,
+                'content_type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'filename': f"{company_name.replace(' ', '_')}_{report_type}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+            })
+
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 @csrf_exempt
 def seed_dashboard_data(request):

@@ -174,9 +174,9 @@
                     <div class="chat-sidebar-header">Active Channels</div>
                     <div class="channel-list">
                         {% for p in projects %}
-                        <div class="channel-item {% if forloop.first %}active{% endif %}" onclick="selectChannel('{{ p.id }}', this)">
+                        <div class="channel-item {% if forloop.first %}active{% endif %}" data-id="{{ p.id }}" data-name="{{ p.name }}" onclick="selectChannel('{{ p.id }}', '{{ p.name|escapejs }}', this)">
                             <span># {{ p.name }}</span>
-                            <span class="badge badge-gray">{{ p.department.name|default:"General" }}</span>
+                            <span class="badge badge-gray">{{ p.departments.first.name|default:"General" }}</span>
                         </div>
                         {% empty %}
                         <div style="font-size: 11px; color: var(--text-muted); padding: 12px;">No channels available</div>
@@ -189,7 +189,7 @@
                     <div class="chat-top-header">
                         <div>
                             <div id="channelTitle" style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
-                                # Selected Channel
+                                # {% if projects.first %}{{ projects.first.name }}{% else %}No Channel Selected{% endif %}
                             </div>
                             <div style="font-size: 11px; color: var(--text-muted);">Real-time encrypted team messaging</div>
                         </div>
@@ -210,60 +210,73 @@
     </div>
 
     <script>
-        const projectSelect = document.getElementById('projectSelect');
+        let currentProjectId = '{% if projects.first %}{{ projects.first.id }}{% endif %}';
         const chatArea = document.getElementById('chatArea');
         const chatInput = document.getElementById('chatInput');
         const sendChatBtn = document.getElementById('sendChatBtn');
         const channelTitle = document.getElementById('channelTitle');
+        const currentUserEmail = "{{ email|default:'' }}".toLowerCase();
 
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        function selectChannel(pId, elem) {
-            if (projectSelect) {
-                projectSelect.value = pId;
-                if (elem) {
-                    document.querySelectorAll('.channel-item').forEach(c => c.classList.remove('active'));
-                    elem.classList.add('active');
-                }
-                loadMessages();
+        function formatTime(timestamp) {
+            if (!timestamp) return 'Just now';
+            try {
+                const date = new Date(timestamp * 1000);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return 'Just now';
             }
         }
 
-        async function loadMessages() {
-            if (!projectSelect) return;
-            const pId = projectSelect.value;
-            if (!pId) return;
+        function selectChannel(pId, pName, elem) {
+            currentProjectId = pId;
+            if (elem) {
+                document.querySelectorAll('.channel-item').forEach(c => c.classList.remove('active'));
+                elem.classList.add('active');
+            }
+            if (channelTitle && pName) {
+                channelTitle.textContent = '# ' + pName;
+            }
+            loadMessages();
+        }
 
-            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
-            if (selectedOption && channelTitle) {
-                channelTitle.textContent = '# ' + selectedOption.text;
+        async function loadMessages() {
+            if (!currentProjectId) {
+                if (chatArea) chatArea.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">No active channels. Create a project first.</div>';
+                return;
             }
 
             try {
-                const res = await fetch(`/api/chat/messages/?project=${encodeURIComponent(pId)}`);
+                const res = await fetch(`/api/chat/messages/?project=${encodeURIComponent(currentProjectId)}`);
                 const data = await res.json();
                 if (data.status === 'ok') {
-                    if (data.messages.length === 0) {
+                    if (!data.messages || data.messages.length === 0) {
                         chatArea.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">No messages in this channel yet. Start the conversation!</div>';
                         return;
                     }
 
-                    const currentUser = "{{ email }}";
                     chatArea.innerHTML = data.messages.map(m => {
-                        const isSelf = m.user === currentUser;
+                        const isSelf = (m.email || '').toLowerCase() === currentUserEmail;
+                        const timeDisplay = formatTime(m.time);
                         return `
                             <div class="bubble ${isSelf ? 'bubble-sent' : 'bubble-received'}">
                                 ${!isSelf ? `<div style="font-size:11px; font-weight:600; color:var(--primary-accent); margin-bottom:2px;">${escapeHtml(m.user)}</div>` : ''}
                                 <div>${escapeHtml(m.text)}</div>
-                                <div class="msg-meta" style="${isSelf ? 'text-align:right;' : ''}">${m.time || 'Just now'}</div>
+                                <div class="msg-meta" style="${isSelf ? 'text-align:right;' : ''}">${timeDisplay}</div>
                             </div>
                         `;
                     }).join('');
                     chatArea.scrollTop = chatArea.scrollHeight;
+                } else {
+                    if (data.message && data.message.includes('restricted')) {
+                        chatArea.innerHTML = `<div style="text-align:center; padding:30px; color:var(--danger-red); font-size:12px;">${escapeHtml(data.message)}</div>`;
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -273,14 +286,17 @@
         if (sendChatBtn) {
             sendChatBtn.onclick = async () => {
                 const text = chatInput.value.trim();
-                const pId = projectSelect ? projectSelect.value : null;
-                if (!text || !pId) return;
+                if (!text) return;
+                if (!currentProjectId) {
+                    alert('Please select a channel first');
+                    return;
+                }
 
                 try {
                     const res = await fetch('/api/chat/messages/', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ project: pId, text: text })
+                        body: JSON.stringify({ project: currentProjectId, text: text })
                     });
                     const data = await res.json();
                     if (data.status === 'ok') {
@@ -304,10 +320,9 @@
             };
         }
 
-        if (projectSelect) {
-            projectSelect.onchange = loadMessages;
-            setInterval(loadMessages, 4000);
+        if (currentProjectId) {
             loadMessages();
+            setInterval(loadMessages, 4000);
         }
     </script>
 </body>

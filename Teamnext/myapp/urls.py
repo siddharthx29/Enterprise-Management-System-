@@ -104,6 +104,7 @@ urlpatterns = [
     path("api/inventory/add-asset/", views.api_add_asset, name="api_add_asset"),
     path("api/reports/generate/", views.api_generate_report, name="api_generate_report"),
     path("reports-page/", views.reports_page, name="reports_page"),
+    path("api/notifications/", views.api_notifications, name="api_notifications"),
     path("api/dashboard-data/", views.api_dashboard_data, name="api_dashboard_data"),
     path("api/dashboard-data/seed/", views.seed_dashboard_data, name="api_seed_data"),
 

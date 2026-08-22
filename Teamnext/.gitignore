@@ -1,0 +1,30 @@
+# Environment and Secret Files
+.env
+.env.*
+!.env.example
+*.env
+**/.env
+
+# SQLite Database & Local Data
+*.sqlite3
+*.db
+db.sqlite3
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Static and media directories
+staticfiles/
+media/
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# Logs
+*.log
+logs/

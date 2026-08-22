@@ -123,13 +123,13 @@
                             <div class="mail-scroll" id="draftsList" style="max-height: 160px;">
                                 {% if drafts and drafts|length > 0 %}
                                 {% for d in drafts %}
-                                <div class="mail-card" style="cursor: default;">
-                                    <div style="font-weight: 600; font-size: 12px; color: var(--text-primary);">{{ d.subject }}</div>
+                                <div class="mail-card" id="draft-item-{{ d.id }}" style="cursor: default;">
+                                    <div style="font-weight: 600; font-size: 12px; color: var(--text-primary);">{{ d.subject|default:"(No Subject)" }}</div>
                                     <div style="font-size: 11px; color: var(--text-muted);">To: {{ d.to }}</div>
                                     <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">{{ d.body|truncatechars:60 }}</div>
                                     <div style="margin-top: 6px; display: flex; gap: 6px;">
-                                        <button class="btn btn-ghost btn-sm loadDraftBtn" data-idx="{{ forloop.counter0 }}">Load</button>
-                                        <button class="btn btn-danger btn-sm delDraftBtn" data-idx="{{ forloop.counter0 }}">Delete</button>
+                                        <button class="btn btn-ghost btn-sm loadDraftBtn" data-id="{{ d.id }}" data-to="{{ d.to }}" data-subject="{{ d.subject }}" data-body="{{ d.body }}">Load</button>
+                                        <button class="btn btn-danger btn-sm delDraftBtn" data-id="{{ d.id }}">Delete</button>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -149,12 +149,13 @@
                             <div class="mail-scroll" style="max-height: 160px;">
                                 {% if sent and sent|length > 0 %}
                                 {% for m in sent %}
-                                <div class="mail-card">
+                                <div class="mail-card" onclick="openEmailObj(this)">
                                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                                        <strong style="font-size: 12px; color: var(--text-primary);">{{ m.subject }}</strong>
-                                        <span style="font-size: 11px; color: var(--text-muted);">To: {{ m.to }}</span>
+                                        <strong class="em-subj" style="font-size: 12px; color: var(--text-primary);">{{ m.subject|default:"(No Subject)" }}</strong>
+                                        <span class="em-from" style="font-size: 11px; color: var(--text-muted);">To: {{ m.to }}</span>
                                     </div>
                                     <div style="font-size: 12px; color: var(--text-secondary);">{{ m.body|truncatechars:80 }}</div>
+                                    <div class="em-body" style="display: none;">{{ m.body }}</div>
                                 </div>
                                 {% endfor %}
                                 {% else %}
@@ -177,7 +178,7 @@
             </div>
             <div class="modal-body">
                 <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">
-                    From: <strong id="modalFrom" style="color: var(--text-primary);">sender@example.com</strong>
+                    From / To: <strong id="modalFrom" style="color: var(--text-primary);">sender@example.com</strong>
                 </div>
                 <div id="modalBody" style="background: #FAFBFD; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; line-height: 1.5; white-space: pre-wrap; max-height: 300px; overflow-y: auto;">
                     Email content...
@@ -196,31 +197,23 @@
         const inboxList = document.getElementById('inboxList');
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const loader = document.createElement('div');
-            loader.id = 'imapLoader';
-            loader.innerHTML = '<div style="padding:10px; text-align:center; font-size:12px; color:var(--text-muted);">Checking external mailboxes...</div>';
-            if (inboxList && inboxList.innerText.includes('No inbox')) {
-                inboxList.innerHTML = '';
-            }
-            if (inboxList) inboxList.prepend(loader);
-
             try {
                 const res = await fetch('/api/email/fetch/');
                 const data = await res.json();
                 if (data.status === 'ok' && data.emails && data.emails.length > 0) {
                     renderAsyncEmails(data.emails);
-                } else {
-                    loader.innerHTML = '<div style="padding:6px; font-size:11px; color:var(--text-muted); text-align:center;">Inbox up to date.</div>';
-                    setTimeout(() => loader.remove(), 2000);
                 }
             } catch (e) {
-                if (loader) loader.innerHTML = '<div style="padding:6px; font-size:11px; color:var(--text-muted); text-align:center;">Inbox ready.</div>';
+                console.error(e);
             }
         });
 
         function renderAsyncEmails(list) {
-            const loader = document.getElementById('imapLoader');
-            if (loader) loader.remove();
+            if (!inboxList) return;
+            const existingText = inboxList.innerText.trim();
+            if (existingText.includes('No inbox messages')) {
+                inboxList.innerHTML = '';
+            }
 
             list.forEach(m => {
                 const el = document.createElement('div');
@@ -229,11 +222,11 @@
                 el.innerHTML = `
                     <div onclick="openEmailObj(this)">
                         <div style="display:flex; justify-content:space-between; margin-bottom:2px">
-                            <strong class="em-subj" style="font-size:13px; color:var(--text-primary);">${escapeHtml(m.subject)}</strong>
+                            <strong class="em-subj" style="font-size:13px; color:var(--text-primary);">${escapeHtml(m.subject || '(No Subject)')}</strong>
                             <span class="em-from" style="font-size:11px; color:var(--text-muted);">${escapeHtml(m.from)}</span>
                         </div>
-                        <div style="font-size:12px; color:var(--text-secondary); line-height:1.4;">${escapeHtml(m.body).slice(0, 90)}...</div>
-                        <div class="em-body" style="display:none;">${escapeHtml(m.body)}</div>
+                        <div style="font-size:12px; color:var(--text-secondary); line-height:1.4;">${escapeHtml(m.body || '').slice(0, 90)}...</div>
+                        <div class="em-body" style="display:none;">${escapeHtml(m.body || '')}</div>
                     </div>
                 `;
                 inboxList.prepend(el);
@@ -246,9 +239,9 @@
         }
 
         function openEmailObj(el) {
-            const subj = el.querySelector('.em-subj').innerText;
-            const from = el.querySelector('.em-from').innerText;
-            const body = el.querySelector('.em-body').innerText;
+            const subj = el.querySelector('.em-subj') ? el.querySelector('.em-subj').innerText : 'Message';
+            const from = el.querySelector('.em-from') ? el.querySelector('.em-from').innerText : '';
+            const body = el.querySelector('.em-body') ? el.querySelector('.em-body').innerText : '';
 
             document.getElementById('modalSubject').innerText = subj;
             document.getElementById('modalFrom').innerText = from;
@@ -270,6 +263,7 @@
                 status.style.color = 'var(--danger-red)';
                 return;
             }
+            sendBtn.disabled = true;
             status.textContent = 'Sending...';
             status.style.color = 'var(--text-muted)';
             try {
@@ -279,105 +273,92 @@
                     body: JSON.stringify({ to, subject, body })
                 });
                 const data = await res.json();
-                if (data.status === 'success') {
-                    status.textContent = 'Email sent!';
+                if (data.status === 'success' || data.status === 'ok') {
+                    status.textContent = 'Email sent successfully!';
                     status.style.color = 'var(--success-green)';
+                    document.getElementById('to').value = '';
+                    document.getElementById('subject').value = '';
+                    document.getElementById('body').value = '';
                     setTimeout(() => location.reload(), 700);
                 } else {
                     status.textContent = data.message || 'Failed';
                     status.style.color = 'var(--danger-red)';
+                    sendBtn.disabled = false;
                 }
             } catch (e) {
                 status.textContent = 'Error sending email';
                 status.style.color = 'var(--danger-red)';
+                sendBtn.disabled = false;
             }
         });
 
-        saveBtn.addEventListener('click', () => {
-            const draft = {
-                to: document.getElementById('to').value,
-                subject: document.getElementById('subject').value,
-                body: document.getElementById('body').value,
-                action: 'save'
-            };
-            fetch('/email-page/save-draft/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(draft)
-            })
-            .then(r => r.json())
-            .then(d => {
+        saveBtn.addEventListener('click', async () => {
+            const to = document.getElementById('to').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const body = document.getElementById('body').value.trim();
+
+            if (!to && !subject && !body) {
+                status.textContent = 'Enter email details to save draft';
+                status.style.color = 'var(--danger-red)';
+                return;
+            }
+
+            try {
+                const res = await fetch('/email-page/save-draft/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'save', to, subject, body })
+                });
+                const d = await res.json();
                 if (d.status === 'ok') {
                     status.textContent = 'Draft saved';
                     status.style.color = 'var(--success-green)';
-                    renderDrafts(d.drafts || []);
+                    setTimeout(() => location.reload(), 600);
                 } else {
-                    status.textContent = 'Failed to save draft';
+                    status.textContent = d.message || 'Failed to save draft';
                     status.style.color = 'var(--danger-red)';
                 }
-            });
+            } catch (e) {
+                status.textContent = 'Connection error';
+                status.style.color = 'var(--danger-red)';
+            }
         });
 
-        function renderDrafts(list) {
-            const container = document.getElementById('draftsList');
-            if (!container) return;
-            if (!list || list.length === 0) {
-                container.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:12px;">No saved drafts.</div>';
+        document.addEventListener('click', async function (e) {
+            if (e.target.classList.contains('loadDraftBtn')) {
+                const to = e.target.getAttribute('data-to') || '';
+                const subj = e.target.getAttribute('data-subject') || '';
+                const body = e.target.getAttribute('data-body') || '';
+
+                document.getElementById('to').value = to;
+                document.getElementById('subject').value = subj;
+                document.getElementById('body').value = body;
+                status.textContent = 'Draft loaded into composer';
+                status.style.color = 'var(--success-green)';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
-            let html = '';
-            list.forEach((d, i) => {
-                html += `
-                    <div class="mail-card" style="cursor: default;">
-                        <div style="font-weight: 600; font-size: 12px; color: var(--text-primary);">${escapeHtml(d.subject)}</div>
-                        <div style="font-size: 11px; color: var(--text-muted);">To: ${escapeHtml(d.to)}</div>
-                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(d.body || '').slice(0, 60)}</div>
-                        <div style="margin-top: 6px; display: flex; gap: 6px;">
-                            <button class="btn btn-ghost btn-sm loadDraftBtn" data-idx="${i}">Load</button>
-                            <button class="btn btn-danger btn-sm delDraftBtn" data-idx="${i}">Delete</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
-        }
 
-        document.addEventListener('click', function (e) {
-            if (e.target.classList.contains('loadDraftBtn')) {
-                const idx = e.target.getAttribute('data-idx');
-                fetch('/email-page/save-draft/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'load', index: idx })
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if (d.status === 'ok' && d.draft) {
-                        document.getElementById('to').value = d.draft.to || '';
-                        document.getElementById('subject').value = d.draft.subject || '';
-                        document.getElementById('body').value = d.draft.body || '';
-                        status.textContent = 'Draft loaded';
-                        status.style.color = 'var(--success-green)';
-                    } else {
-                        alert(d.message || 'Unable to load draft');
-                    }
-                });
-            }
             if (e.target.classList.contains('delDraftBtn')) {
-                const idx = e.target.getAttribute('data-idx');
-                fetch('/email-page/save-draft/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'delete', index: idx })
-                })
-                .then(r => r.json())
-                .then(d => {
+                const draftId = e.target.getAttribute('data-id');
+                if (!draftId) return;
+
+                try {
+                    const res = await fetch('/email-page/save-draft/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'delete', id: draftId })
+                    });
+                    const d = await res.json();
                     if (d.status === 'ok') {
-                        renderDrafts(d.drafts || []);
+                        const card = document.getElementById(`draft-item-${draftId}`) || e.target.closest('.mail-card');
+                        if (card) card.remove();
                     } else {
-                        alert('Delete failed');
+                        alert(d.message || 'Delete failed');
                     }
-                });
+                } catch (err) {
+                    alert('Connection error');
+                }
             }
         });
     </script>

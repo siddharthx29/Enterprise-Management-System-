@@ -68,17 +68,17 @@
             <div class="stat-grid">
                 <div class="stat-card">
                     <div class="stat-label">Reports Generated</div>
-                    <div class="stat-value" style="color: #9333EA;">342</div>
-                    <div class="stat-delta delta-up">● All time exports</div>
+                    <div class="stat-value" style="color: #9333EA;">{{ reports_stats.total_exports|default:"12" }}</div>
+                    <div class="stat-delta delta-up">● All time records</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Scheduled Batch Jobs</div>
-                    <div class="stat-value" style="color: var(--primary-accent);">8</div>
-                    <div class="stat-delta" style="color: var(--text-muted);">● Executing tonight</div>
+                    <div class="stat-label">Active Monitored Projects</div>
+                    <div class="stat-value" style="color: var(--primary-accent);">{{ reports_stats.active_projects|default:"1" }}</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● Live tracking</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">Data Accuracy Rating</div>
-                    <div class="stat-value" style="color: var(--success-green);">99.8%</div>
+                    <div class="stat-label">Data Reconciliation</div>
+                    <div class="stat-value" style="color: var(--success-green);">{{ reports_stats.accuracy_rate|default:"100%" }}</div>
                     <div class="stat-delta delta-up">● Fully reconciled</div>
                 </div>
             </div>

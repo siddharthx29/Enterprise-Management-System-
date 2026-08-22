@@ -5,10 +5,10 @@
 <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-JETS327R52');
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-JETS327R52');
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,7 +35,8 @@
     <!-- Main Content -->
     <div class="main-wrapper">
         <!-- Reusable Top Navigation Bar -->
-        {% include "components/topbar.html" with page_title="Personnel Profile" action_label="← Dashboard" action_onclick="window.location.href='/dashboard/'" %}
+        {% include "components/topbar.html" with page_title="Personnel Profile" action_label="← Dashboard"
+        action_onclick="window.location.href='/dashboard/'" %}
 
         <main class="content-area">
             <div class="panel" style="max-width: 680px;">
@@ -44,32 +45,46 @@
                 </div>
                 <div class="panel-body">
                     <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px;">
-                        <div style="width: 56px; height: 56px; border-radius: 50%; background: #2D4170; color: #7BA7F7; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700;">
+                        <div
+                            style="width: 56px; height: 56px; border-radius: 50%; background: #2D4170; color: #7BA7F7; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700;">
                             {{ email|slice:":1"|upper }}
                         </div>
                         <div>
-                            <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);">{{ user.name|default:email }}</div>
+                            <div style="font-size: 16px; font-weight: 700; color: var(--text-primary);">{{
+                                user.name|default:email }}</div>
                             <div style="margin-top: 4px;">
                                 <span class="badge badge-blue">{{ user.role|default:"Enterprise Member" }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
+                    <div
+                        style="display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--border-subtle); padding-top: 18px;">
                         <div>
-                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Verified Email Address</label>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">{{ email }}</div>
+                            <label
+                                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Verified
+                                Email Address</label>
+                            <div
+                                style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">
+                                {{ email }}</div>
                         </div>
 
                         <div>
-                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Organization Tenant</label>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">{{ user.company_name|default:company_name }}</div>
+                            <label
+                                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">Organization
+                                Tenant</label>
+                            <div
+                                style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">
+                                {{ user.company_name|default:company_name }}</div>
                         </div>
 
                         <div>
-                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">System Permissions</label>
-                            <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">
-                                {% if is_company_admin %}Tenant Administrator (Full Access){% else %}Standard Member{% endif %}
+                            <label style="font-size: 11px; text-transform: uppercase; color: var(--text-muted);">System
+                                Permissions</label>
+                            <div
+                                style="font-size: 13px; font-weight: 500; color: var(--text-primary); margin-top: 2px;">
+                                {% if is_company_admin %}Tenant Administrator (Full Access){% else %}Standard Member{%
+                                endif %}
                             </div>
                         </div>
                     </div>

@@ -219,16 +219,3 @@ LOGGING = {
         },
     },
 }
-
-# ============================================================
-# Startup email config check — prints to Render logs on boot
-# ============================================================
-import sys
-print("=== EMAIL CONFIG CHECK ===", file=sys.stderr)
-print(f"EMAIL_HOST: {EMAIL_HOST}", file=sys.stderr)
-print(f"EMAIL_PORT: {EMAIL_PORT}", file=sys.stderr)
-print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER}", file=sys.stderr)
-print(f"EMAIL_HOST_PASSWORD set: {'YES' if EMAIL_HOST_PASSWORD else 'NO - THIS IS THE PROBLEM'}", file=sys.stderr)
-print(f"EMAIL_USE_TLS: {EMAIL_USE_TLS}", file=sys.stderr)
-print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}", file=sys.stderr)
-print("==========================", file=sys.stderr)

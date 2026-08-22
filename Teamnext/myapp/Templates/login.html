@@ -307,7 +307,7 @@
                                 <option value="{{ c.email }}">{{ c.name }}</option>
                                 {% endfor %}
                             </select>
-                            <input id="companyFree" type="email" placeholder="Or enter company email directly" onchange="resetOtpState('employee')">
+                            <input id="companyFree" name="company_email_free" type="email" placeholder="Or enter company email directly" oninput="if(this.value.trim()){ document.getElementById('companySelect').value = ''; } resetOtpState('employee')">
                         </div>
                         <div class="form-group">
                             <label>Company Verification OTP</label>
@@ -324,13 +324,13 @@
                             <input name="full_name" type="text" placeholder="John Doe">
                         </div>
                         <div class="form-group">
-                            <label>Your Personal Work Email</label>
-                            <input name="employee_email_signup" id="employeeEmail" type="email" placeholder="john@company.com">
+                            <label>Your Personal / Work Email</label>
+                            <input name="employee_email_signup" id="employeeEmail" type="email" placeholder="e.g. yourname@gmail.com or work@domain.com" required>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Password</label>
-                                <input name="employee_password_signup" type="password" placeholder="Create password">
+                                <input name="employee_password_signup" type="password" placeholder="Create password" required>
                             </div>
                             <div class="form-group">
                                 <label>Role / Title</label>
