@@ -13,14 +13,6 @@
         <span class="page-title">{{ page_title|default:"Dashboard" }}</span>
     </div>
 
-    <!-- Quick Global Search Provision -->
-    <div class="topbar-search" style="position: relative; display: flex; align-items: center;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 10px; color: var(--text-muted); pointer-events: none;">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input type="text" placeholder="Search modules, projects, tickets..." onkeydown="if(event.key==='Enter' && this.value.trim()){ window.location.href='/tickets-page/?search=' + encodeURIComponent(this.value.trim()); }" style="padding: 6px 12px 6px 30px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--page-bg); color: var(--text-primary); outline: none; width: 240px; transition: var(--transition);">
-    </div>
 
     <div class="topbar-right">
         {% if custom_action_button %}
