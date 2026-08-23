@@ -1,0 +1,523 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Hub - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="/static/myapp/images/logo.svg">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+    <style>
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .social-col {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .social-col-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #FAFBFD;
+        }
+
+        .social-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 440px;
+        }
+
+        .social-card-item {
+            background: #FAFBFD;
+            border-radius: 7px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-subtle);
+            transition: var(--transition);
+        }
+
+        .social-card-item:hover {
+            background: #F0F2F7;
+            border-color: var(--border-color);
+        }
+
+        .social-add-panel {
+            padding: 12px 14px;
+            background: #FFFFFF;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+    </style>
+</head>
+
+<body class="app-layout">
+    <!-- Subtle 3D Decorative Background Layer -->
+    <div class="erp-3d-background" aria-hidden="true">
+        <div class="erp-3d-shape erp-3d-sphere erp-3d-sphere-1"></div>
+        <div class="erp-3d-shape erp-3d-sphere erp-3d-sphere-2"></div>
+        <div class="erp-3d-shape erp-3d-ring erp-3d-ring-1"></div>
+        <div class="erp-3d-shape erp-3d-cube erp-3d-cube-1"></div>
+        <div class="erp-3d-shape erp-3d-mesh"></div>
+    </div>
+
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    <!-- TeamNext Enterprise ERP Sidebar Component -->
+<aside class="sidebar">
+    <!-- Brand Header -->
+    <a href="/dashboard/" class="brand-block">
+        <div class="brand-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        </div>
+        <div class="brand-text">
+            <span class="brand-name">TeamNext</span>
+            <span class="brand-sub">Enterprise ERP</span>
+        </div>
+    </a>
+
+    <!-- User Profile Card -->
+    <a href="/profile-page/" class="user-block">
+        <div class="user-avatar">
+            
+                AD
+            
+        </div>
+        <div class="user-info">
+            <span class="user-name">admin@teamnext.com</span>
+            <span class="user-role">TeamNext Global Technologies</span>
+        </div>
+        <svg class="user-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </a>
+
+    <!-- Sidebar Navigation with Unified Vector Symbols -->
+    <nav class="sidebar-nav">
+        <!-- OVERVIEW -->
+        <div class="nav-section-label">Overview</div>
+        <a href="/dashboard/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="/analytics-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"></path>
+                <path d="m19 9-5 5-4-4-5 5"></path>
+                <circle cx="19" cy="9" r="2"></circle>
+            </svg>
+            <span class="nav-text">Analytics</span>
+        </a>
+        <a href="/reports-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13h8"></path>
+                <path d="M8 17h5"></path>
+                <path d="M8 9h2"></path>
+            </svg>
+            <span class="nav-text">Reports</span>
+        </a>
+
+        <!-- OPERATIONS -->
+        <div class="nav-section-label">Operations</div>
+        <a href="/projects-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                <line x1="12" y1="11" x2="12" y2="17"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+            </svg>
+            <span class="nav-text">Departments</span>
+        </a>
+        <a href="/hr-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="nav-text">HR Management</span>
+        </a>
+        <a href="/leaves-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="m9 16 2 2 4-4"></path>
+            </svg>
+            <span class="nav-text">Leaves</span>
+        </a>
+        <a href="/inventory-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m7.5 4.27 9 5.15"></path>
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                <path d="m3.3 7 8.7 5 8.7-5"></path>
+                <path d="M12 22V12"></path>
+            </svg>
+            <span class="nav-text">Inventory</span>
+        </a>
+
+        <!-- FINANCE -->
+        <div class="nav-section-label">Finance</div>
+        <a href="/finance-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <circle cx="7" cy="15" r="1"></circle>
+                <path d="M14 15h4"></path>
+            </svg>
+            <span class="nav-text">Finance</span>
+        </a>
+
+        <!-- COLLABORATION -->
+        <div class="nav-section-label">Collaboration</div>
+        <a href="/chat-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                <circle cx="9" cy="10" r="1"></circle>
+                <circle cx="12" cy="10" r="1"></circle>
+                <circle cx="15" cy="10" r="1"></circle>
+            </svg>
+            <span class="nav-text">Communication</span>
+        </a>
+        <a href="/email-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </svg>
+            <span class="nav-text">Email Center</span>
+        </a>
+        <a href="/tickets-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path>
+                <line x1="12" y1="9" x2="12" y2="15"></line>
+                <line x1="9" y1="12" x2="15" y2="12"></line>
+            </svg>
+            <span class="nav-text">Tickets</span>
+        </a>
+        <a href="/social-page/" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 11 18-5v12L3 14v-3z"></path>
+                <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+            </svg>
+            <span class="nav-text">Social Hub</span>
+        </a>
+
+        <!-- SYSTEM -->
+        <div class="nav-section-label">System</div>
+        
+        <a href="/users-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <circle cx="12" cy="11" r="3"></circle>
+            </svg>
+            <span class="nav-text">Users & Access</span>
+        </a>
+        <a href="/settings-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span class="nav-text">Settings</span>
+        </a>
+        
+        <a href="/logout/" class="nav-item logout-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="nav-text">Logout</span>
+        </a>
+    </nav>
+</aside>
+
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Reusable Top Navigation Bar -->
+        <!-- TeamNext Enterprise ERP Topbar Component -->
+<div class="topbar">
+    <div class="topbar-left">
+        <a href="/dashboard/" class="breadcrumb-root">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            TeamNext
+        </a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="page-title">Social Hub</span>
+    </div>
+
+    <!-- Quick Global Search Provision -->
+    <div class="topbar-search" style="position: relative; display: flex; align-items: center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 10px; color: var(--text-muted); pointer-events: none;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search modules, projects, tickets..." onkeydown="if(event.key==='Enter' && this.value.trim()){ window.location.href='/tickets-page/?search=' + encodeURIComponent(this.value.trim()); }" style="padding: 6px 12px 6px 30px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--page-bg); color: var(--text-primary); outline: none; width: 240px; transition: var(--transition);">
+    </div>
+
+    <div class="topbar-right">
+        
+            <button class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="window.location.href='/dashboard/'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>← Dashboard</span>
+            </button>
+        
+
+        <!-- Notification Bell with Counter Provision -->
+        <div style="position: relative; display: inline-block;">
+            <button id="topbarNotifBtn" class="notif-btn" title="Open Notifications" onclick="toggleNotifDropdown(event)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span id="topbarNotifBadge" class="notif-badge" style="display: none;">0</span>
+            </button>
+
+            <!-- Notifications Dropdown Panel -->
+            <div id="topbarNotifPanel" style="display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 320px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 1000; overflow: hidden;">
+                <div style="padding: 12px 14px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: #FAFBFD;">
+                    <strong style="font-size: 12.5px; color: var(--text-primary);">Notifications</strong>
+                    <span id="notifHeaderCount" class="badge badge-blue" style="font-size: 10px;">0 New</span>
+                </div>
+                <div id="notifItemsContainer" style="max-height: 280px; overflow-y: auto; padding: 6px 0; display: flex; flex-direction: column;">
+                    <div style="padding: 16px; text-align: center; font-size: 11.5px; color: var(--text-muted);">Loading notifications...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Profile Avatar Provision -->
+        <a href="/profile-page/" class="header-avatar" title="Account Status: Online (Click to view Profile)" style="text-decoration: none;">
+            
+                AD
+            
+            <div class="avatar-online-dot"></div>
+        </a>
+    </div>
+</div>
+
+<script>
+    let notifsLoaded = false;
+
+    async function fetchNotifications() {
+        try {
+            const res = await fetch('/api/notifications/');
+            const data = await res.json();
+            if (data.status === 'ok') {
+                const badge = document.getElementById('topbarNotifBadge');
+                const headerCount = document.getElementById('notifHeaderCount');
+                const container = document.getElementById('notifItemsContainer');
+                const count = data.count || 0;
+
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'flex' : 'none';
+                }
+                if (headerCount) {
+                    headerCount.textContent = `${count} New`;
+                }
+
+                if (container) {
+                    if (!data.notifications || data.notifications.length === 0) {
+                        container.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 11.5px; color: var(--text-muted);">No new notifications</div>';
+                    } else {
+                        container.innerHTML = data.notifications.map(n => `
+                            <a href="${n.link || '/tickets-page/'}" style="text-decoration: none; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); display: block; transition: var(--transition); background: ${n.unread ? 'rgba(79, 142, 247, 0.04)' : '#FFFFFF'};">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${n.title}</span>
+                                    <span style="font-size: 10px; color: var(--text-muted);">${n.time || ''}</span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.3;">${n.message}</div>
+                            </a>
+                        `).join('');
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load notifications', e);
+        }
+    }
+
+    function toggleNotifDropdown(e) {
+        if (e) e.stopPropagation();
+        const panel = document.getElementById('topbarNotifPanel');
+        if (!panel) return;
+        const isOpen = panel.style.display === 'block';
+        panel.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+            fetchNotifications();
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('topbarNotifPanel');
+        const btn = document.getElementById('topbarNotifBtn');
+        if (panel && panel.style.display === 'block') {
+            if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', fetchNotifications);
+</script>
+
+
+        <main class="content-area">
+            <div class="social-grid">
+                <!-- Column 1: Birthdays -->
+                <div class="social-col">
+                    <div class="social-col-header">
+                        <span class="panel-title" style="color: var(--warning-amber);">🎂 Birthdays</span>
+                        <span class="badge badge-amber">1</span>
+                    </div>
+                    <div class="social-list" id="list-birthday">
+                        
+                        <div class="social-card-item">
+                            <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
+                                <span></span>
+                                <span style="color: var(--warning-amber); font-size: 11px;"></span>
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"></div>
+                        </div>
+                        
+                    </div>
+                    <div class="social-add-panel">
+                        <input type="text" id="bd-name" placeholder="Name (e.g. John Doe)" class="compact-input">
+                        <input type="text" id="bd-date" placeholder="Date (e.g. Feb 04)" class="compact-input">
+                        <input type="text" id="bd-role" placeholder="Role (e.g. Designer)" class="compact-input">
+                        <button class="btn btn-primary btn-sm" onclick="addItem('birthday')">Add Birthday</button>
+                    </div>
+                </div>
+
+                <!-- Column 2: Hot Topics -->
+                <div class="social-col">
+                    <div class="social-col-header">
+                        <span class="panel-title" style="color: var(--primary-accent);">🔥 Hot Topics</span>
+                        <span class="badge badge-blue">1</span>
+                    </div>
+                    <div class="social-list" id="list-topic">
+                        
+                        <div class="social-card-item">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">AI in Enterprise Resource Planning: Future Trends</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">By  •  views</div>
+                        </div>
+                        
+                    </div>
+                    <div class="social-add-panel">
+                        <input type="text" id="topic-title" placeholder="Topic Title" class="compact-input">
+                        <input type="text" id="topic-author" placeholder="Author / Department" class="compact-input">
+                        <button class="btn btn-primary btn-sm" onclick="addItem('topic')">Add Topic</button>
+                    </div>
+                </div>
+
+                <!-- Column 3: Daily Dares -->
+                <div class="social-col">
+                    <div class="social-col-header">
+                        <span class="panel-title" style="color: var(--info-blue);">🎯 Daily Dares</span>
+                        <span class="badge badge-green">1</span>
+                    </div>
+                    <div class="social-list" id="list-dare">
+                        
+                        <div class="social-card-item">
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">""</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">From:  → To: </div>
+                        </div>
+                        
+                    </div>
+                    <div class="social-add-panel">
+                        <input type="text" id="dare-task" placeholder="The Task / Dare" class="compact-input">
+                        <input type="text" id="dare-from" placeholder="From (Challenger)" class="compact-input">
+                        <input type="text" id="dare-to" placeholder="To (Target)" class="compact-input">
+                        <button class="btn btn-primary btn-sm" onclick="addItem('dare')">Add Dare</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function addItem(type) {
+            let payload = { type: type };
+
+            if (type === 'birthday') {
+                const name = document.getElementById('bd-name').value.trim();
+                const date = document.getElementById('bd-date').value.trim();
+                const role = document.getElementById('bd-role').value.trim();
+                if (!name || !date) return alert('Name and Date are required');
+                payload = { ...payload, name, date, role };
+            } else if (type === 'topic') {
+                const title = document.getElementById('topic-title').value.trim();
+                const author = document.getElementById('topic-author').value.trim();
+                if (!title) return alert('Title is required');
+                payload = { ...payload, title, author: author || 'Anonymous' };
+            } else if (type === 'dare') {
+                const task = document.getElementById('dare-task').value.trim();
+                const from = document.getElementById('dare-from').value.trim();
+                const to = document.getElementById('dare-to').value.trim();
+                if (!task) return alert('Task is required');
+                payload = { ...payload, task, from: from || 'Mystery', to: to || 'All' };
+            }
+
+            try {
+                const res = await fetch('/api/social/add/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.status === 'ok') {
+                    window.location.reload();
+                } else {
+                    alert('Failed: ' + data.message);
+                }
+            } catch (e) {
+                alert('Error adding item');
+            }
+        }
+    </script>
+</body>
+
+</html>

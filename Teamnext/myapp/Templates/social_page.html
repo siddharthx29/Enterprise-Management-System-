@@ -107,10 +107,10 @@
                         {% for b in birthdays %}
                         <div class="social-card-item">
                             <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary);">
-                                <span>{{ b.name }}</span>
-                                <span style="color: var(--warning-amber); font-size: 11px;">{{ b.date }}</span>
+                                <span>{{ b.title|default:b.name }}</span>
+                                <span style="color: var(--warning-amber); font-size: 11px;">{{ b.meta_info|default:b.date }}</span>
                             </div>
-                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">{{ b.role }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">{{ b.content|default:b.role }}</div>
                         </div>
                         {% empty %}
                         <div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">No upcoming birthdays</div>
@@ -134,7 +134,7 @@
                         {% for t in hot_topics %}
                         <div class="social-card-item">
                             <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">{{ t.title }}</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">By {{ t.author }} • {{ t.views }} views</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">By {{ t.meta_info|default:t.author|default:"Team" }}</div>
                         </div>
                         {% empty %}
                         <div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">No discussion topics yet</div>
@@ -156,8 +156,8 @@
                     <div class="social-list" id="list-dare">
                         {% for d in dares %}
                         <div class="social-card-item">
-                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">"{{ d.task }}"</div>
-                            <div style="font-size: 11px; color: var(--text-muted);">From: {{ d.from }} → To: {{ d.to }}</div>
+                            <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">"{{ d.content|default:d.task }}"</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">From: {{ d.title|default:d.from|default:"Challenger" }} → To: {{ d.meta_info|default:d.to|default:"All" }}</div>
                         </div>
                         {% empty %}
                         <div style="text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px;">No daily challenges yet</div>

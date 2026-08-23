@@ -18,7 +18,11 @@
     <!-- User Profile Card -->
     <a href="/profile-page/" class="user-block">
         <div class="user-avatar">
-            {% if request.user.first_name %}
+            {% if user.name %}
+                {{ user.name|slice:":2"|upper }}
+            {% elif name %}
+                {{ name|slice:":2"|upper }}
+            {% elif request.user.first_name %}
                 {{ request.user.first_name|slice:":1"|upper }}{{ request.user.last_name|slice:":1"|upper }}
             {% elif email %}
                 {{ email|slice:":2"|upper }}
@@ -27,7 +31,7 @@
             {% endif %}
         </div>
         <div class="user-info">
-            <span class="user-name">{% if request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% elif email %}{{ email }}{% else %}Administrator{% endif %}</span>
+            <span class="user-name">{% if user.name %}{{ user.name }}{% elif name %}{{ name }}{% elif request.user.first_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% elif email %}{{ email }}{% else %}Administrator{% endif %}</span>
             <span class="user-role">{{ company_name|default:"Enterprise Workspace" }}</span>
         </div>
         <svg class="user-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

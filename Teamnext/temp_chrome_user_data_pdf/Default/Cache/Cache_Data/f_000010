@@ -1,0 +1,914 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JETS327R52"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-JETS327R52');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Management - TeamNext</title>
+    <link rel="icon" type="image/svg+xml" href="/static/myapp/images/logo.svg">
+    <link rel="stylesheet" href="/static/myapp/css/theme.css">
+    <link rel="stylesheet" href="/static/myapp/css/responsive.css">
+    <script src="/static/myapp/js/theme.js"></script>
+</head>
+
+<body class="app-layout">
+    <!-- Subtle 3D Decorative Background Layer -->
+    <div class="erp-3d-background" aria-hidden="true">
+        <div class="erp-3d-shape erp-3d-sphere erp-3d-sphere-1"></div>
+        <div class="erp-3d-shape erp-3d-sphere erp-3d-sphere-2"></div>
+        <div class="erp-3d-shape erp-3d-ring erp-3d-ring-1"></div>
+        <div class="erp-3d-shape erp-3d-cube erp-3d-cube-1"></div>
+        <div class="erp-3d-shape erp-3d-mesh"></div>
+    </div>
+
+    <!-- Reusable Left Sidebar with tailored SVG symbols -->
+    <!-- TeamNext Enterprise ERP Sidebar Component -->
+<aside class="sidebar">
+    <!-- Brand Header -->
+    <a href="/dashboard/" class="brand-block">
+        <div class="brand-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+        </div>
+        <div class="brand-text">
+            <span class="brand-name">TeamNext</span>
+            <span class="brand-sub">Enterprise ERP</span>
+        </div>
+    </a>
+
+    <!-- User Profile Card -->
+    <a href="/profile-page/" class="user-block">
+        <div class="user-avatar">
+            
+                AD
+            
+        </div>
+        <div class="user-info">
+            <span class="user-name">admin@teamnext.com</span>
+            <span class="user-role">TeamNext Global Technologies</span>
+        </div>
+        <svg class="user-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+    </a>
+
+    <!-- Sidebar Navigation with Unified Vector Symbols -->
+    <nav class="sidebar-nav">
+        <!-- OVERVIEW -->
+        <div class="nav-section-label">Overview</div>
+        <a href="/dashboard/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+            </svg>
+            <span class="nav-text">Dashboard</span>
+        </a>
+        <a href="/analytics-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"></path>
+                <path d="m19 9-5 5-4-4-5 5"></path>
+                <circle cx="19" cy="9" r="2"></circle>
+            </svg>
+            <span class="nav-text">Analytics</span>
+        </a>
+        <a href="/reports-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M8 13h8"></path>
+                <path d="M8 17h5"></path>
+                <path d="M8 9h2"></path>
+            </svg>
+            <span class="nav-text">Reports</span>
+        </a>
+
+        <!-- OPERATIONS -->
+        <div class="nav-section-label">Operations</div>
+        <a href="/projects-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                <line x1="12" y1="11" x2="12" y2="17"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+            </svg>
+            <span class="nav-text">Departments</span>
+        </a>
+        <a href="/hr-page/" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="nav-text">HR Management</span>
+        </a>
+        <a href="/leaves-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="m9 16 2 2 4-4"></path>
+            </svg>
+            <span class="nav-text">Leaves</span>
+        </a>
+        <a href="/inventory-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m7.5 4.27 9 5.15"></path>
+                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                <path d="m3.3 7 8.7 5 8.7-5"></path>
+                <path d="M12 22V12"></path>
+            </svg>
+            <span class="nav-text">Inventory</span>
+        </a>
+
+        <!-- FINANCE -->
+        <div class="nav-section-label">Finance</div>
+        <a href="/finance-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="5" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+                <circle cx="7" cy="15" r="1"></circle>
+                <path d="M14 15h4"></path>
+            </svg>
+            <span class="nav-text">Finance</span>
+        </a>
+
+        <!-- COLLABORATION -->
+        <div class="nav-section-label">Collaboration</div>
+        <a href="/chat-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                <circle cx="9" cy="10" r="1"></circle>
+                <circle cx="12" cy="10" r="1"></circle>
+                <circle cx="15" cy="10" r="1"></circle>
+            </svg>
+            <span class="nav-text">Communication</span>
+        </a>
+        <a href="/email-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </svg>
+            <span class="nav-text">Email Center</span>
+        </a>
+        <a href="/tickets-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"></path>
+                <line x1="12" y1="9" x2="12" y2="15"></line>
+                <line x1="9" y1="12" x2="15" y2="12"></line>
+            </svg>
+            <span class="nav-text">Tickets</span>
+        </a>
+        <a href="/social-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 11 18-5v12L3 14v-3z"></path>
+                <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path>
+            </svg>
+            <span class="nav-text">Social Hub</span>
+        </a>
+
+        <!-- SYSTEM -->
+        <div class="nav-section-label">System</div>
+        
+        <a href="/users-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <circle cx="12" cy="11" r="3"></circle>
+            </svg>
+            <span class="nav-text">Users & Access</span>
+        </a>
+        <a href="/settings-page/" class="nav-item ">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span class="nav-text">Settings</span>
+        </a>
+        
+        <a href="/logout/" class="nav-item logout-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span class="nav-text">Logout</span>
+        </a>
+    </nav>
+</aside>
+
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Reusable Top Navigation Bar -->
+        <!-- TeamNext Enterprise ERP Topbar Component -->
+<div class="topbar">
+    <div class="topbar-left">
+        <a href="/dashboard/" class="breadcrumb-root">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+            TeamNext
+        </a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="page-title">HR Management</span>
+    </div>
+
+    <!-- Quick Global Search Provision -->
+    <div class="topbar-search" style="position: relative; display: flex; align-items: center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 10px; color: var(--text-muted); pointer-events: none;">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" placeholder="Search modules, projects, tickets..." onkeydown="if(event.key==='Enter' && this.value.trim()){ window.location.href='/tickets-page/?search=' + encodeURIComponent(this.value.trim()); }" style="padding: 6px 12px 6px 30px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--page-bg); color: var(--text-primary); outline: none; width: 240px; transition: var(--transition);">
+    </div>
+
+    <div class="topbar-right">
+        
+            <button class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="openAddEmployeeModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>+ Add Employee</span>
+            </button>
+        
+
+        <!-- Notification Bell with Counter Provision -->
+        <div style="position: relative; display: inline-block;">
+            <button id="topbarNotifBtn" class="notif-btn" title="Open Notifications" onclick="toggleNotifDropdown(event)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span id="topbarNotifBadge" class="notif-badge" style="display: none;">0</span>
+            </button>
+
+            <!-- Notifications Dropdown Panel -->
+            <div id="topbarNotifPanel" style="display: none; position: absolute; right: 0; top: calc(100% + 8px); width: 320px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 1000; overflow: hidden;">
+                <div style="padding: 12px 14px; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; background: #FAFBFD;">
+                    <strong style="font-size: 12.5px; color: var(--text-primary);">Notifications</strong>
+                    <span id="notifHeaderCount" class="badge badge-blue" style="font-size: 10px;">0 New</span>
+                </div>
+                <div id="notifItemsContainer" style="max-height: 280px; overflow-y: auto; padding: 6px 0; display: flex; flex-direction: column;">
+                    <div style="padding: 16px; text-align: center; font-size: 11.5px; color: var(--text-muted);">Loading notifications...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Profile Avatar Provision -->
+        <a href="/profile-page/" class="header-avatar" title="Account Status: Online (Click to view Profile)" style="text-decoration: none;">
+            
+                AD
+            
+            <div class="avatar-online-dot"></div>
+        </a>
+    </div>
+</div>
+
+<script>
+    let notifsLoaded = false;
+
+    async function fetchNotifications() {
+        try {
+            const res = await fetch('/api/notifications/');
+            const data = await res.json();
+            if (data.status === 'ok') {
+                const badge = document.getElementById('topbarNotifBadge');
+                const headerCount = document.getElementById('notifHeaderCount');
+                const container = document.getElementById('notifItemsContainer');
+                const count = data.count || 0;
+
+                if (badge) {
+                    badge.textContent = count;
+                    badge.style.display = count > 0 ? 'flex' : 'none';
+                }
+                if (headerCount) {
+                    headerCount.textContent = `${count} New`;
+                }
+
+                if (container) {
+                    if (!data.notifications || data.notifications.length === 0) {
+                        container.innerHTML = '<div style="padding: 20px; text-align: center; font-size: 11.5px; color: var(--text-muted);">No new notifications</div>';
+                    } else {
+                        container.innerHTML = data.notifications.map(n => `
+                            <a href="${n.link || '/tickets-page/'}" style="text-decoration: none; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle); display: block; transition: var(--transition); background: ${n.unread ? 'rgba(79, 142, 247, 0.04)' : '#FFFFFF'};">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                                    <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">${n.title}</span>
+                                    <span style="font-size: 10px; color: var(--text-muted);">${n.time || ''}</span>
+                                </div>
+                                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.3;">${n.message}</div>
+                            </a>
+                        `).join('');
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load notifications', e);
+        }
+    }
+
+    function toggleNotifDropdown(e) {
+        if (e) e.stopPropagation();
+        const panel = document.getElementById('topbarNotifPanel');
+        if (!panel) return;
+        const isOpen = panel.style.display === 'block';
+        panel.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) {
+            fetchNotifications();
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        const panel = document.getElementById('topbarNotifPanel');
+        const btn = document.getElementById('topbarNotifBtn');
+        if (panel && panel.style.display === 'block') {
+            if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', fetchNotifications);
+</script>
+
+
+        <main class="content-area">
+            <!-- Stat Cards -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Workforce</div>
+                    <div class="stat-value" id="total-employees" style="color: var(--primary-accent);">8</div>
+                    <div class="stat-delta delta-up">● Registered staff</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Present Today</div>
+                    <div class="stat-value" id="present-today" style="color: var(--success-green);">0</div>
+                    <div class="stat-delta delta-up">● Checked-in</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">On Leave Today</div>
+                    <div class="stat-value" id="on-leave-today" style="color: var(--warning-amber);">1</div>
+                    <div class="stat-delta" style="color: var(--text-muted);">● Approved absences</div>
+                </div>
+            </div>
+
+            <!-- Main Panel with Tabs -->
+            <div class="panel">
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('employees')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>Employee Directory</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('attendance')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Attendance Tracker</span>
+                    </button>
+                    <button class="tab" onclick="switchTab('records')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span>Historical Records</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Employees Directory -->
+                <div id="employees-tab" class="tab-content active">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Personnel Roster</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Department</th>
+                                    <th>Phone</th>
+                                    <th>Today's Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employees-list">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                                        Loading employee directory...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Attendance Tracker -->
+                <div id="attendance-tab" class="tab-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-primary);">Daily Time & Attendance Log</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="margin: 0; font-size: 11px;">Date:</label>
+                            <input type="date" id="attendance-tracker-date" class="compact-input" onchange="loadAttendanceTracker()">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-tracker-list">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                                        Loading tracker...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Records History -->
+                <div id="records-tab" class="tab-content">
+                    <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 160px;">
+                            <label>Filter Employee</label>
+                            <select id="filter-employee-select" onchange="loadAttendanceRecords()">
+                                <option value="">All Personnel</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label>From Date</label>
+                            <input type="date" id="from-date" onchange="loadAttendanceRecords()">
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label>To Date</label>
+                            <input type="date" id="to-date" onchange="loadAttendanceRecords()">
+                        </div>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label>Status</label>
+                            <select id="filter-status-select" onchange="loadAttendanceRecords()">
+                                <option value="">All Statuses</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Employee</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-list">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                                        Select date range to view records.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Add Employee -->
+    <div id="add-employee-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Register New Employee</span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeAddEmployeeModal()">✕</button>
+            </div>
+            <form id="add-employee-form" onsubmit="addEmployee(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" name="name" required placeholder="e.g. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Work Email *</label>
+                        <input type="email" name="email" required placeholder="john.doe@company.com">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Designation / Role *</label>
+                            <input type="text" name="role" required placeholder="e.g. Senior Accountant">
+                        </div>
+                        <div class="form-group">
+                            <label>Contact Phone</label>
+                            <input type="tel" name="phone" placeholder="+1 555-0199">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <select name="department_id" id="modal-department-select">
+                            <option value="">-- Unassigned --</option>
+                            
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" onclick="closeAddEmployeeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Mark Attendance -->
+    <div id="mark-attendance-modal" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <span class="modal-title">Log Attendance Record</span>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="closeMarkAttendanceModal()">✕</button>
+            </div>
+            <form id="mark-attendance-form" onsubmit="markAttendance(event)">
+                <div class="modal-body">
+                    <input type="hidden" name="employee_id" id="attendance-employee-id">
+                    <input type="hidden" name="mode" id="attendance-mode" value="checkin">
+
+                    <div class="form-group">
+                        <label>Employee Name</label>
+                        <input type="text" id="attendance-employee-name" readonly style="background: #F8FAFC; color: var(--text-secondary);">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" name="date" id="attendance-date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Attendance Status</label>
+                            <select name="status" id="attendance-status">
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="late">Late Arrival</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" id="checkin-group">
+                            <label>Check In Time</label>
+                            <input type="time" name="check_in" id="attendance-checkin">
+                        </div>
+                        <div class="form-group" id="checkout-group">
+                            <label>Check Out Time</label>
+                            <input type="time" name="check_out" id="attendance-checkout">
+                        </div>
+                    </div>
+                    <div id="checkout-hint" style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                        ℹ Check-out time activates after check-in is submitted.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-ghost" onclick="closeMarkAttendanceModal()">Cancel</button>
+                    <button type="submit" id="attendance-submit-btn" class="btn btn-primary">Save Attendance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'employees';
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tab === 'employees') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('employees-tab').classList.add('active');
+                loadEmployees();
+            } else if (tab === 'attendance') {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('attendance-tab').classList.add('active');
+                loadAttendanceTracker();
+            } else if (tab === 'records') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('records-tab').classList.add('active');
+                loadAttendanceRecords();
+            }
+        }
+
+        async function loadEmployees() {
+            try {
+                const response = await fetch('/api/hr/employees/');
+                const data = await response.json();
+                const tbody = document.getElementById('employees-list');
+                const filterSelect = document.getElementById('filter-employee-select');
+
+                if (data.status === 'ok' && data.employees) {
+                    if (data.employees.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">No employees registered yet.</td></tr>';
+                        return;
+                    }
+
+                    filterSelect.innerHTML = '<option value="">All Personnel</option>' +
+                        data.employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+
+                    tbody.innerHTML = data.employees.map(emp => {
+                        let badgeClass = 'badge-gray';
+                        let statusText = emp.attendance_status || 'Not Checked In';
+                        if (emp.attendance_status === 'present') badgeClass = 'badge-green';
+                        else if (emp.attendance_status === 'absent') badgeClass = 'badge-red';
+                        else if (emp.attendance_status === 'late') badgeClass = 'badge-amber';
+
+                        return `
+                            <tr>
+                                <td style="font-weight:600; color:var(--text-primary);">${emp.name}</td>
+                                <td>${emp.email}</td>
+                                <td>${emp.role || '-'}</td>
+                                <td>${emp.department_name || '-'}</td>
+                                <td>${emp.phone || '-'}</td>
+                                <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="openMarkAttendanceModal(${emp.id}, '${emp.name.replace(/'/g, "\\'")}', '${emp.check_in || ''}', '${emp.check_out || ''}', '${emp.check_in ? 'checkout' : 'checkin'}')">
+                                        ${emp.check_in && !emp.check_out ? 'Check Out' : 'Mark'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAttendanceTracker() {
+            const dateInput = document.getElementById('attendance-tracker-date');
+            if (!dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+            const date = dateInput.value;
+
+            try {
+                const response = await fetch(`/api/hr/attendance-tracker/?date=${date}`);
+                const data = await response.json();
+                const tbody = document.getElementById('attendance-tracker-list');
+
+                if (data.status === 'ok' && data.records) {
+                    if (data.records.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No records found for this date.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = data.records.map(rec => {
+                        let badgeClass = 'badge-gray';
+                        if (rec.status === 'present') badgeClass = 'badge-green';
+                        else if (rec.status === 'absent') badgeClass = 'badge-red';
+                        else if (rec.status === 'late') badgeClass = 'badge-amber';
+
+                        return `
+                            <tr>
+                                <td style="font-weight:600;">${rec.employee_name}</td>
+                                <td>${rec.check_in || '--:--'}</td>
+                                <td>${rec.check_out || '--:--'}</td>
+                                <td><span class="badge ${badgeClass}">${rec.status || 'Pending'}</span></td>
+                                <td>
+                                    <button class="btn btn-ghost btn-sm" onclick="openMarkAttendanceModal(${rec.employee_id}, '${rec.employee_name.replace(/'/g, "\\'")}', '${rec.check_in || ''}', '${rec.check_out || ''}', '${rec.check_in ? 'checkout' : 'checkin'}')">
+                                        Update
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAttendanceRecords() {
+            const empId = document.getElementById('filter-employee-select').value;
+            const fromDate = document.getElementById('from-date').value;
+            const toDate = document.getElementById('to-date').value;
+            const status = document.getElementById('filter-status-select').value;
+
+            const params = new URLSearchParams();
+            if (empId) params.append('employee_id', empId);
+            if (fromDate) params.append('from_date', fromDate);
+            if (toDate) params.append('to_date', toDate);
+            if (status) params.append('status', status);
+
+            try {
+                const response = await fetch(`/api/hr/attendance-records/?${params.toString()}`);
+                const data = await response.json();
+                const tbody = document.getElementById('records-list');
+
+                if (data.status === 'ok' && data.records) {
+                    if (data.records.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No records found matching filters.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = data.records.map(rec => {
+                        let badgeClass = 'badge-gray';
+                        if (rec.status === 'present') badgeClass = 'badge-green';
+                        else if (rec.status === 'absent') badgeClass = 'badge-red';
+                        else if (rec.status === 'late') badgeClass = 'badge-amber';
+
+                        return `
+                            <tr>
+                                <td>${rec.date}</td>
+                                <td style="font-weight:600;">${rec.employee_name}</td>
+                                <td>${rec.check_in || '--:--'}</td>
+                                <td>${rec.check_out || '--:--'}</td>
+                                <td><span class="badge ${badgeClass}">${rec.status}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function openAddEmployeeModal() {
+            document.getElementById('add-employee-modal').classList.add('active');
+        }
+
+        function closeAddEmployeeModal() {
+            document.getElementById('add-employee-modal').classList.remove('active');
+            document.getElementById('add-employee-form').reset();
+        }
+
+        function openMarkAttendanceModal(employeeId, employeeName, existingCheckIn, existingCheckOut, mode) {
+            const checkInField = document.getElementById('attendance-checkin');
+            const checkOutField = document.getElementById('attendance-checkout');
+            const checkoutHint = document.getElementById('checkout-hint');
+            const submitBtn = document.getElementById('attendance-submit-btn');
+            const modeField = document.getElementById('attendance-mode');
+            const statusField = document.getElementById('attendance-status');
+
+            document.getElementById('mark-attendance-form').reset();
+            document.getElementById('attendance-employee-id').value = employeeId;
+            document.getElementById('attendance-employee-name').value = employeeName;
+            document.getElementById('attendance-date').value = new Date().toISOString().split('T')[0];
+
+            if (mode === 'checkout' && existingCheckIn) {
+                modeField.value = 'checkout';
+                checkInField.value = existingCheckIn;
+                checkInField.readOnly = true;
+                checkOutField.disabled = false;
+                checkoutHint.style.display = 'none';
+                checkOutField.value = new Date().toTimeString().slice(0, 5);
+                submitBtn.textContent = 'Log Check Out';
+                statusField.value = 'present';
+            } else {
+                modeField.value = 'checkin';
+                checkInField.readOnly = false;
+                checkOutField.disabled = true;
+                checkoutHint.style.display = 'flex';
+                checkInField.value = new Date().toTimeString().slice(0, 5);
+                submitBtn.textContent = 'Log Check In';
+                statusField.value = 'present';
+            }
+
+            checkInField.onchange = function () {
+                if (this.value) {
+                    checkOutField.disabled = false;
+                    checkoutHint.style.display = 'none';
+                } else {
+                    checkOutField.disabled = true;
+                    checkOutField.value = '';
+                    checkoutHint.style.display = 'flex';
+                }
+            };
+
+            document.getElementById('mark-attendance-modal').classList.add('active');
+        }
+
+        function closeMarkAttendanceModal() {
+            document.getElementById('mark-attendance-modal').classList.remove('active');
+            document.getElementById('mark-attendance-form').reset();
+        }
+
+        async function addEmployee(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const deptVal = formData.get('department_id');
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                role: formData.get('role'),
+                phone: formData.get('phone'),
+                department_id: deptVal ? parseInt(deptVal) : null
+            };
+
+            try {
+                const response = await fetch('/api/hr/add-employee/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.status === 'ok') {
+                    alert(result.message);
+                    closeAddEmployeeModal();
+                    loadEmployees();
+                    updateStats();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('Error adding employee');
+            }
+        }
+
+        async function markAttendance(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = {
+                employee_id: formData.get('employee_id'),
+                date: formData.get('date'),
+                status: formData.get('status'),
+                check_in: formData.get('check_in'),
+                check_out: formData.get('check_out')
+            };
+
+            try {
+                const response = await fetch('/api/hr/mark-attendance/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.status === 'ok') {
+                    alert(result.message);
+                    closeMarkAttendanceModal();
+                    if (currentTab === 'attendance') loadAttendanceTracker();
+                    else loadEmployees();
+                    updateStats();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                alert('Error marking attendance');
+            }
+        }
+
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/hr/employees/');
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    const presentToday = data.employees.filter(e => e.attendance_status === 'present').length;
+                    document.getElementById('total-employees').textContent = data.employees.length;
+                    document.getElementById('present-today').textContent = presentToday;
+                }
+            } catch (e) { }
+        }
+
+        // Set default date filter (last 7 days)
+        const today = new Date();
+        const weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const toDateEl = document.getElementById('to-date');
+        const fromDateEl = document.getElementById('from-date');
+        if (toDateEl) toDateEl.value = today.toISOString().split('T')[0];
+        if (fromDateEl) fromDateEl.value = weekAgo.toISOString().split('T')[0];
+
+        // Init
+        loadEmployees();
+    </script>
+</body>
+
+</html>

@@ -47,6 +47,7 @@ urlpatterns = [
     path("users-page/", views.users_page, name="users_page"),
 
     path("profile-page/", views.profile_page, name="profile_page"),
+    path("api/profile/update/", views.api_update_profile, name="api_update_profile"),
 
     path("settings-page/", views.settings_page, name="settings_page"),
 
@@ -108,6 +109,7 @@ urlpatterns = [
     path("api/reports/generate/", views.api_generate_report, name="api_generate_report"),
     path("reports-page/", views.reports_page, name="reports_page"),
     path("api/notifications/", views.api_notifications, name="api_notifications"),
+    path("api/notifications/mark-read/", views.api_mark_notifications_read, name="api_mark_notifications_read"),
     path("api/dashboard-data/", views.api_dashboard_data, name="api_dashboard_data"),
     path("api/dashboard-data/seed/", views.seed_dashboard_data, name="api_seed_data"),
 

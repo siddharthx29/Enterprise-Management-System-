@@ -21,7 +21,7 @@ from .models import (
     Company, Employee, Project, ProjectMember, Ticket, ChatMessage,
     ChatMessageMedia, EmailMessage, LeaveRequest, SocialItem, Department,
     Invoice, Expense, Payroll, VendorPayment, BankTransaction,
-    InventoryItem, Attendance
+    InventoryItem, Attendance, Notification
 )
 
 
@@ -50,6 +50,84 @@ def verify_and_upgrade_password(user_obj, raw_password):
             user_obj.save(update_fields=['password'])
             return True
         return False
+
+
+def get_user_employee(email):
+    if not email:
+        return None
+    email = str(email).strip().lower()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not emp:
+        co = Company.objects.filter(email__iexact=email).first()
+        if co:
+            emp, _ = Employee.objects.get_or_create(
+                email=co.email,
+                defaults={
+                    'company': co,
+                    'name': co.name,
+                    'password': co.password,
+                    'role': 'Administrator',
+                    'phone': co.phone
+                }
+            )
+    return emp
+
+
+def create_notification_for_users(recipients, notification_type, title, message, link=None, related_object_id=None, exclude_user=None):
+    if not recipients:
+        return
+
+    unique_users = set()
+    for r in recipients:
+        if isinstance(r, Employee):
+            emp = r
+        elif isinstance(r, str):
+            emp = get_user_employee(r)
+        else:
+            emp = None
+
+        if emp:
+            if exclude_user:
+                ex_id = getattr(exclude_user, 'id', None)
+                if ex_id and emp.id == ex_id:
+                    continue
+            unique_users.add(emp)
+
+    if not unique_users:
+        return
+
+    cutoff = timezone.now() - timedelta(seconds=10)
+    created_notifs = []
+    for u in unique_users:
+        if related_object_id:
+            exists = Notification.objects.filter(
+                user=u,
+                notification_type=notification_type,
+                related_object_id=str(related_object_id),
+                created_at__gte=cutoff
+            ).exists()
+        else:
+            exists = Notification.objects.filter(
+                user=u,
+                notification_type=notification_type,
+                title=title,
+                created_at__gte=cutoff
+            ).exists()
+
+        if not exists:
+            created_notifs.append(Notification(
+                user=u,
+                notification_type=notification_type,
+                title=title,
+                message=message,
+                link=link,
+                related_object_id=str(related_object_id) if related_object_id else None,
+                unread=True
+            ))
+
+    if created_notifs:
+        Notification.objects.bulk_create(created_notifs)
+
 
 
 
@@ -772,40 +850,118 @@ def settings_page(request):
     })
 
 def profile_page(request):
-
     if not request.session.get('verified'):
-
         return redirect('login')
 
-    email = request.session.get('otp_email')
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    is_admin = co is not None
 
-    co = Company.objects.filter(email=email).first()
+    stats = {
+        'tickets_count': 0,
+        'projects_count': 0,
+        'leaves_count': 0,
+        'attendance_status': 'Present',
+        'joined_date': None,
+    }
 
-    emp = Employee.objects.filter(email=email).first()
+    if co:
+        stats['tickets_count'] = Ticket.objects.filter(project__company=co).count()
+        stats['projects_count'] = Project.objects.filter(company=co).count()
+        stats['leaves_count'] = LeaveRequest.objects.filter(employee__company=co, status='pending').count()
+        stats['departments_count'] = Department.objects.filter(company=co).count()
+        stats['employees_count'] = Employee.objects.filter(company=co).count()
+        stats['joined_date'] = co.created_at.strftime('%b %d, %Y') if co.created_at else 'Active'
+        dept_name = 'Executive Board'
+        phone_num = co.phone or ''
+        role_label = 'Company Owner / Admin'
+        user_name = co.name
+        user_id_badge = f"TN-ADM-{co.id:04d}"
+    elif emp:
+        stats['tickets_count'] = Ticket.objects.filter(employee=emp).count()
+        stats['projects_count'] = ProjectMember.objects.filter(employee=emp).count()
+        stats['leaves_count'] = LeaveRequest.objects.filter(employee=emp).count()
+        
+        today = timezone.now().date()
+        att = Attendance.objects.filter(employee=emp, date=today).first()
+        if att:
+            stats['attendance_status'] = att.status.capitalize()
+        else:
+            stats['attendance_status'] = 'Active'
+
+        stats['joined_date'] = emp.created_at.strftime('%b %d, %Y') if emp.created_at else 'Active'
+        dept_name = emp.dept.name if emp.dept else (emp.department_old or 'General Operations')
+        phone_num = emp.phone or ''
+        role_label = emp.role or 'Enterprise Member'
+        user_name = emp.name
+        user_id_badge = f"TN-EMP-{emp.id:04d}"
+    else:
+        dept_name = 'Enterprise Member'
+        phone_num = ''
+        role_label = 'Member'
+        user_name = email
+        user_id_badge = "TN-USR-0001"
 
     user_info = {
-
         'email': email,
-
-        'name': co.name if co else (emp.name if emp else email),
-
-        'role': 'Company Admin' if co else (emp.role if emp else 'Employee'),
-
-        'company_name': co.name if co else (emp.company.name if emp else 'TeamNext'),
-
-        'is_admin': co is not None
-
+        'name': user_name,
+        'role': role_label,
+        'department': dept_name,
+        'phone': phone_num,
+        'badge_id': user_id_badge,
+        'company_name': co.name if co else (emp.company.name if emp and emp.company else 'TeamNext ERP'),
+        'is_admin': is_admin
     }
 
     return render(request, 'profile_page.html', {
-
         'user': user_info,
-
         'company_name': user_info['company_name'],
-
-        'email': email
-
+        'email': email,
+        'is_company_admin': is_admin,
+        'stats': stats
     })
+
+
+@csrf_exempt
+def api_update_profile(request):
+    if not request.session.get('verified'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=401)
+
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    import json
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    name = (data.get('name') or '').strip()
+    phone = (data.get('phone') or '').strip()
+
+    if not name:
+        return JsonResponse({'status': 'error', 'message': 'Name is required'})
+
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+
+    if co:
+        co.name = name
+        if phone is not None:
+            co.phone = phone
+        co.save()
+        return JsonResponse({'status': 'success', 'message': 'Company profile updated successfully', 'name': co.name, 'phone': co.phone})
+    elif emp:
+        emp.name = name
+        if phone is not None:
+            emp.phone = phone
+        emp.save()
+        return JsonResponse({'status': 'success', 'message': 'Personal profile updated successfully', 'name': emp.name, 'phone': emp.phone})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'User record not found'})
+
 
 def social_page(request):
 
@@ -844,86 +1000,92 @@ def social_page(request):
     })
 
 @csrf_exempt
-
 def api_add_social_item(request):
-
     if request.method != "POST":
-
         return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
 
     try:
-
         import json
-
         payload = json.loads(request.body.decode("utf-8"))
-
         item_type = payload.get("type")
-
         email = request.session.get('otp_email')
-
         co = Company.objects.filter(email=email).first()
-
+        emp = Employee.objects.filter(email=email).first()
+        if not co and emp:
+            co = emp.company
         if not co:
+            return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
 
-            emp = Employee.objects.filter(email=email).first()
-
-            co = emp.company if emp else None
-
-        if not co:
-
-             return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+        new_item = None
+        notif_title = ""
+        notif_msg = ""
+        target_str = ""
 
         if item_type == "birthday":
-
-            SocialItem.objects.create(
-
+            name_val = payload.get("name") or "Team Member"
+            date_val = payload.get("date") or "Soon"
+            role_val = payload.get("role") or ""
+            new_item = SocialItem.objects.create(
                 company=co, type='birthday',
-
-                title=payload.get("name"),
-
-                meta_info=payload.get("date"),
-
-                content=payload.get("role")
-
+                title=name_val,
+                meta_info=date_val,
+                content=role_val
             )
+            notif_title = f"🎉 Birthday Event: {name_val}"
+            notif_msg = f"{name_val}'s birthday is on {date_val} ({role_val or 'Team Member'})"
+            target_str = name_val
 
         elif item_type == "topic":
-
-            SocialItem.objects.create(
-
+            title_val = payload.get("title") or "New Topic"
+            author_val = payload.get("author") or "Team"
+            new_item = SocialItem.objects.create(
                 company=co, type='topic',
-
-                title=payload.get("title"),
-
-                meta_info=payload.get("author"),
-
+                title=title_val,
+                meta_info=author_val,
                 content="0 comments"
-
             )
+            notif_title = f"🔥 Hot Topic: {title_val}"
+            notif_msg = f"New discussion topic started by {author_val}"
 
         elif item_type == "dare":
-
-            SocialItem.objects.create(
-
+            from_val = payload.get("from") or "Challenger"
+            to_val = payload.get("to") or "All"
+            task_val = payload.get("task") or "Daily Challenge"
+            new_item = SocialItem.objects.create(
                 company=co, type='dare',
-
-                title=payload.get("from"),
-
-                meta_info=payload.get("to"),
-
-                content=payload.get("task")
-
+                title=from_val,
+                meta_info=to_val,
+                content=task_val
             )
-
+            notif_title = f"⚡ Daily Dare: {task_val}"
+            notif_msg = f"Challenge from {from_val} to {to_val}"
+            target_str = to_val
         else:
-
             return JsonResponse({"status": "error", "message": "Unknown type"}, status=400)
+
+        if new_item:
+            # Determine target recipients
+            recipients = list(Employee.objects.filter(company=co))
+            if target_str and target_str.lower() != 'all':
+                specific_emp = Employee.objects.filter(company=co, name__icontains=target_str).first()
+                if specific_emp:
+                    recipients = [specific_emp]
+
+            create_notification_for_users(
+                recipients=recipients,
+                notification_type='SOCIAL_EVENT',
+                title=notif_title,
+                message=notif_msg,
+                link='/social-page/',
+                related_object_id=str(new_item.id),
+                exclude_user=emp
+            )
 
         return JsonResponse({"status": "ok"})
 
     except Exception as e:
-
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
 
 def leaves_page(request):
 
@@ -990,108 +1152,126 @@ def leaves_page(request):
     })
 
 @csrf_exempt
-
 def api_apply_leave(request):
-
     if not request.session.get("verified"):
-
         return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
 
     if request.method != "POST":
-
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
 
     try:
-
         import json
-
         from datetime import datetime
 
         data = json.loads(request.body.decode("utf-8"))
-
         email = request.session.get("otp_email")
-
-        emp = Employee.objects.filter(email=email).first()
+        emp = get_user_employee(email)
 
         if not emp:
+            return JsonResponse({"status": "error", "message": "Employee not found"}, status=404)
 
-             return JsonResponse({"status": "error", "message": "Employee not found"}, status=404)
+        reason_val = data.get("reason") or "Personal Leave"
+        start_val = data.get("start_date") or datetime.now().date()
+        end_val = data.get("end_date") or datetime.now().date()
 
-        LeaveRequest.objects.create(
-
+        leave = LeaveRequest.objects.create(
             employee=emp,
-
-            reason=data.get("reason"),
-
-            start_date=data.get("start_date") or datetime.now().date(),
-
-            end_date=data.get("end_date") or datetime.now().date(),
-
+            reason=reason_val,
+            start_date=start_val,
+            end_date=end_val,
             status='pending'
+        )
 
+        # Notify approvers (Company admin, Project Members with can_approve_leaves, and Managers)
+        co = emp.company
+        approvers = []
+        if co:
+            co_emp = get_user_employee(co.email)
+            if co_emp:
+                approvers.append(co_emp)
+            leave_pm_emps = Employee.objects.filter(company=co, project_memberships__can_approve_leaves=True)
+            for e in leave_pm_emps:
+                approvers.append(e)
+            mgr_emps = Employee.objects.filter(company=co, role__icontains='Manager')
+            for e in mgr_emps:
+                approvers.append(e)
+
+        create_notification_for_users(
+            recipients=approvers,
+            notification_type='LEAVE_SUBMITTED',
+            title=f"🏖️ Leave Request: {emp.name}",
+            message=f"New leave request submitted ({leave.start_date} to {leave.end_date}). Reason: {reason_val[:50]}",
+            link="/leaves-page/",
+            related_object_id=str(leave.id),
+            exclude_user=emp
         )
 
         return JsonResponse({"status": "ok"})
 
     except Exception as e:
-
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
+
 @csrf_exempt
-
 def api_leave_action(request):
-
     if not request.session.get("verified"):
-
         return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
 
     email = request.session.get("otp_email")
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
 
-    co = Company.objects.filter(email=email).first()
-
-    emp = Employee.objects.filter(email=email).first()
-
-    is_authorized = (co is not None) or ProjectMember.objects.filter(employee=emp, can_approve_leaves=True).exists()
+    is_authorized = (co is not None) or (emp and ProjectMember.objects.filter(employee=emp, can_approve_leaves=True).exists()) or (emp and 'manager' in (emp.role or '').lower())
 
     if not is_authorized:
-
-        return JsonResponse({"status": "error", "message": "Only admins can approve leaves"}, status=403)
+        return JsonResponse({"status": "error", "message": "Only admins and authorized approvers can approve leaves"}, status=403)
 
     if request.method != "POST":
-
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
 
     try:
-
         import json
-
         data = json.loads(request.body.decode("utf-8"))
-
         leave_id = data.get("leave_id")
-
         action = data.get("action")
-
-        leave = LeaveRequest.objects.get(id=leave_id)
+        if not co and emp:
+            co = emp.company
+        leave = LeaveRequest.objects.filter(id=leave_id, employee__company=co).first()
+        if not leave:
+            return JsonResponse({"status": "error", "message": "Leave request not found or unauthorized"}, status=404)
 
         if action == "approve":
-
             leave.status = "approved"
-
+            leave.save()
+            create_notification_for_users(
+                recipients=[leave.employee],
+                notification_type='LEAVE_APPROVED',
+                title="✅ Leave Approved",
+                message=f"Your leave request from {leave.start_date} to {leave.end_date} has been approved.",
+                link="/leaves-page/",
+                related_object_id=str(leave.id)
+            )
         elif action == "reject":
-
             leave.status = "rejected"
-
-        leave.save()
+            leave.save()
+            reason_suffix = f" (Reason: {leave.reason[:40]})" if leave.reason else ""
+            create_notification_for_users(
+                recipients=[leave.employee],
+                notification_type='LEAVE_REJECTED',
+                title="❌ Leave Rejected",
+                message=f"Your leave request from {leave.start_date} to {leave.end_date} has been rejected.{reason_suffix}",
+                link="/leaves-page/",
+                related_object_id=str(leave.id)
+            )
 
         return JsonResponse({"status": "ok"})
 
     except LeaveRequest.DoesNotExist:
-
         return JsonResponse({"status": "error", "message": "Leave not found"}, status=404)
 
     except Exception as e:
-
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
 
 @csrf_exempt
 def send_dashboard_email(request):
@@ -1880,6 +2060,25 @@ def chat_messages(request):
                 'is_document': cat == 'document'
             })
 
+        # Determine channel members to notify
+        member_emps = list(Employee.objects.filter(project_memberships__project=proj, project_memberships__is_allowed=True))
+        dept_emps = list(Employee.objects.filter(company=proj.company, dept__in=proj.departments.all()))
+        recipients = list(set(member_emps + dept_emps))
+        if not recipients:
+            recipients = list(Employee.objects.filter(company=proj.company))
+
+        sender_name = emp.name if emp else "Workspace Member"
+        msg_snippet = text[:50] if text else "Attachment shared"
+        create_notification_for_users(
+            recipients=recipients,
+            notification_type='COMMUNICATION_CHANNEL',
+            title=f"💬 #{proj.name}",
+            message=f"{sender_name}: {msg_snippet}",
+            link=f"/chat-page/?project_id={proj.id}",
+            related_object_id=str(msg.id),
+            exclude_user=emp
+        )
+
         return JsonResponse({
             'status': 'ok',
             'message': {
@@ -2170,11 +2369,27 @@ def project_members(request, project_id):
 
             if action == 'remove':
                 ProjectMember.objects.filter(project=proj, employee=target_emp).delete()
+                create_notification_for_users(
+                    recipients=[target_emp],
+                    notification_type='COMMUNICATION_CHANNEL',
+                    title=f"ℹ️ Removed from Channel: #{proj.name}",
+                    message=f"You have been removed from channel #{proj.name}.",
+                    link="/chat-page/",
+                    related_object_id=str(proj.id)
+                )
                 return JsonResponse({'status': 'ok', 'message': 'Member removed from project'})
             else:
                 pm, created = ProjectMember.objects.get_or_create(project=proj, employee=target_emp)
                 pm.is_allowed = True
                 pm.save()
+                create_notification_for_users(
+                    recipients=[target_emp],
+                    notification_type='COMMUNICATION_CHANNEL',
+                    title=f"📢 Added to Channel: #{proj.name}",
+                    message=f"You have been added to channel #{proj.name}.",
+                    link=f"/chat-page/?project_id={proj.id}",
+                    related_object_id=str(proj.id)
+                )
                 return JsonResponse({'status': 'ok', 'message': 'Member assigned to project'})
 
         except Exception as e:
@@ -2767,89 +2982,6 @@ def reports_page(request):
         'email': email,
         'company_name': company_name,
         'reports_stats': reports_stats
-    })
-
-
-def api_notifications(request):
-    if not request.session.get('verified'):
-        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
-
-    email = (request.session.get('otp_email') or '').strip().lower()
-    co = Company.objects.filter(email__iexact=email).first()
-    emp = Employee.objects.filter(email__iexact=email).first()
-    if not co and emp:
-        co = emp.company
-
-    if not co:
-        return JsonResponse({'status': 'ok', 'count': 0, 'notifications': []})
-
-    notifications = []
-
-    # 1. Unresolved Tickets
-    tickets_qs = Ticket.objects.filter(project__company=co).select_related('employee').order_by('-created_at')[:4]
-    for t in tickets_qs:
-        emp_name = t.employee.name if t.employee else "Team"
-        notifications.append({
-            'title': f'Ticket #{t.id}: {t.title[:24]}',
-            'message': f'Priority: {t.priority.capitalize()} | Assigned: {emp_name}',
-            'time': t.created_at.strftime('%b %d') if hasattr(t, 'created_at') and t.created_at else 'Active',
-            'link': f'/tickets-page/?id={t.id}',
-            'unread': True
-        })
-
-    # 2. Pending Leaves (For managers/admins)
-    is_approver = (Company.objects.filter(email__iexact=email).exists()) or (emp and ProjectMember.objects.filter(employee=emp, can_approve_leaves=True).exists())
-    if is_approver:
-        pending_leaves = LeaveRequest.objects.filter(employee__company=co, status='pending').select_related('employee')[:3]
-        for l in pending_leaves:
-            notifications.append({
-                'title': f'Leave Request: {l.employee.name}',
-                'message': f'{l.leave_type.capitalize()} ({l.start_date} to {l.end_date})',
-                'time': 'Pending',
-                'link': '/hr-page/',
-                'unread': True
-            })
-
-    # 3. Direct Inbox Messages
-    recent_emails = EmailMessage.objects.filter(recipient_email=email, is_draft=False).order_by('-timestamp')[:3]
-    for m in recent_emails:
-        notifications.append({
-            'title': f'Mail: {m.sender_email.split("@")[0]}',
-            'message': (m.subject or '(No Subject)')[:32],
-            'time': m.timestamp.strftime('%H:%M') if m.timestamp else 'Recent',
-            'link': '/email-page/',
-            'unread': False
-        })
-
-    # 4. Social Club Activities (Birthdays, Hot Topics, Daily Dares)
-    recent_socials = SocialItem.objects.filter(company=co).order_by('-created_at')[:4]
-    for item in recent_socials:
-        if item.type == 'birthday':
-            s_title = f"🎉 Birthday: {item.title}"
-            s_msg = f"{item.content or 'Celebration'} • {item.meta_info or 'Today'}"
-        elif item.type == 'topic':
-            s_title = f"🔥 Hot Topic: {item.title}"
-            s_msg = f"Started by {item.meta_info or 'Team'}"
-        elif item.type == 'dare':
-            s_title = f"⚡ Daily Dare: {item.title}"
-            s_msg = f"Target: {item.meta_info or 'Team'} • {item.content or ''}"
-        else:
-            s_title = f"Social Club: {item.title}"
-            s_msg = item.content or ''
-
-        notifications.append({
-            'title': s_title,
-            'message': s_msg,
-            'time': item.created_at.strftime('%b %d') if item.created_at else 'Social Club',
-            'link': '/social-page/',
-            'unread': True
-        })
-
-    unread_count = len([n for n in notifications if n.get('unread')])
-    return JsonResponse({
-        'status': 'ok',
-        'count': unread_count,
-        'notifications': notifications
     })
 
 
@@ -3633,4 +3765,98 @@ def create_ticket(request):
         return JsonResponse({'status': 'success', 'message': f'Ticket "{title}" raised in project "{proj.name}"'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+def api_notifications(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+
+    email = (request.session.get("otp_email") or '').strip().lower()
+    emp = get_user_employee(email)
+    co = Company.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
+
+    if emp or co:
+        if not emp:
+            emp = get_user_employee(co.email)
+
+        qs = Notification.objects.filter(user=emp).order_by('-created_at')[:20] if emp else []
+        unread_count = Notification.objects.filter(user=emp, unread=True).count() if emp else 0
+        notifs = []
+        for n in qs:
+            notifs.append({
+                "id": n.id,
+                "type": n.notification_type,
+                "title": n.title,
+                "message": n.message,
+                "link": n.link or "/dashboard/",
+                "unread": n.unread,
+                "time": n.created_at.strftime("%b %d, %H:%M") if n.created_at else ""
+            })
+
+        # Include unresolved workspace tickets for comprehensive coverage
+        if co:
+            tickets_qs = Ticket.objects.filter(project__company=co).select_related('employee').order_by('-created_at')[:4]
+            for t in tickets_qs:
+                emp_name = t.employee.name if t.employee else "Team"
+                t_title = f"Ticket #{t.id}: {t.title[:24]}"
+                if not any(n['title'] == t_title for n in notifs):
+                    notifs.append({
+                        "id": f"t_{t.id}",
+                        "type": "TICKET",
+                        "title": t_title,
+                        "message": f"Priority: {t.priority.capitalize()} | Assigned: {emp_name}",
+                        "link": f"/tickets-page/?id={t.id}",
+                        "unread": True,
+                        "time": t.created_at.strftime("%b %d") if hasattr(t, 'created_at') and t.created_at else "Active"
+                    })
+                    unread_count += 1
+
+        return JsonResponse({
+            "status": "ok",
+            "count": unread_count,
+            "notifications": notifs
+        })
+
+    return JsonResponse({
+        "status": "ok",
+        "count": 0,
+        "notifications": []
+    })
+
+
+@csrf_exempt
+def api_mark_notifications_read(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+    email = (request.session.get("otp_email") or '').strip().lower()
+    emp = get_user_employee(email)
+    if not emp:
+        return JsonResponse({"status": "error", "message": "User record not found"}, status=404)
+
+    try:
+        import json
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except Exception:
+        payload = request.POST
+
+    notif_id = payload.get('notification_id') or payload.get('id')
+    mark_all = payload.get('all') or payload.get('mark_all')
+
+    if mark_all:
+        Notification.objects.filter(user=emp, unread=True).update(unread=False)
+        return JsonResponse({"status": "ok", "message": "All notifications marked as read"})
+    elif notif_id:
+        Notification.objects.filter(user=emp, id=notif_id).update(unread=False)
+        return JsonResponse({"status": "ok", "message": "Notification marked as read"})
+    else:
+        Notification.objects.filter(user=emp, unread=True).update(unread=False)
+        return JsonResponse({"status": "ok", "message": "Notifications marked as read"})
+
+
 

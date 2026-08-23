@@ -297,3 +297,23 @@ class Attendance(models.Model):
 
     class Meta:
         unique_together = ('employee', 'date')
+
+class Notification(models.Model):
+    user = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=50, default='GENERAL', db_index=True)
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    link = models.CharField(max_length=500, blank=True, null=True)
+    related_object_id = models.CharField(max_length=100, blank=True, null=True)
+    unread = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'unread']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"[{self.notification_type}] {self.title} for {self.user.email}"
+
