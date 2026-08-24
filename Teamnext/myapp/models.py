@@ -109,6 +109,18 @@ class Ticket(models.Model):
 
     ]
 
+    STATUS_CHOICES = [
+
+        ('open', 'Open'),
+
+        ('in_progress', 'In Progress'),
+
+        ('resolved', 'Resolved'),
+
+        ('closed', 'Closed'),
+
+    ]
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tickets')
 
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets')
@@ -119,7 +131,12 @@ class Ticket(models.Model):
 
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
 
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
 
 class ChatMessage(models.Model):
 

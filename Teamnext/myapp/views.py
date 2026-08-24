@@ -964,43 +964,57 @@ def api_update_profile(request):
 
 
 def social_page(request):
-
     if not request.session.get("verified"):
-
         return redirect("login")
 
-    email = request.session.get('otp_email')
-
-    co = Company.objects.filter(email=email).first()
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
+    if not co and emp:
+        co = emp.company
 
     if not co:
+        messages.error(request, "Workspace not found. Please log in.")
+        return redirect("login")
 
-        emp = Employee.objects.filter(email=email).first()
+    birthdays = SocialItem.objects.filter(company=co, type='birthday').order_by('-created_at')
+    topics = SocialItem.objects.filter(company=co, type='topic').order_by('-created_at')
+    dares = SocialItem.objects.filter(company=co, type='dare').order_by('-created_at')
 
-        co = emp.company if emp else None
-
-    birthdays = SocialItem.objects.filter(company=co, type='birthday')
-
-    topics = SocialItem.objects.filter(company=co, type='topic')
-
-    dares = SocialItem.objects.filter(company=co, type='dare')
+    # Seed initial workspace social items if completely empty
+    if not birthdays.exists() and not topics.exists() and not dares.exists():
+        SocialItem.objects.create(
+            company=co, type='birthday', title='Sarah Jenkins', meta_info='Feb 15', content='Lead UX Designer'
+        )
+        SocialItem.objects.create(
+            company=co, type='birthday', title='Alex Rivera', meta_info='Feb 22', content='Backend Engineer'
+        )
+        SocialItem.objects.create(
+            company=co, type='topic', title='Quarterly Innovation Hackathon Ideas', meta_info='Engineering Team', content='45 comments'
+        )
+        SocialItem.objects.create(
+            company=co, type='topic', title='Hybrid Work & Flexible Hours Discussion', meta_info='HR Operations', content='18 comments'
+        )
+        SocialItem.objects.create(
+            company=co, type='dare', title='Mike Ross', meta_info='Dev Team', content='Wear a superhero hat during morning standup'
+        )
+        birthdays = SocialItem.objects.filter(company=co, type='birthday').order_by('-created_at')
+        topics = SocialItem.objects.filter(company=co, type='topic').order_by('-created_at')
+        dares = SocialItem.objects.filter(company=co, type='dare').order_by('-created_at')
 
     return render(request, "social_page.html", {
-
         "email": email,
-
-        "company_name": co.name if co else "TeamNext",
-
+        "company_name": co.name,
         "birthdays": birthdays,
-
         "hot_topics": topics,
-
         "dares": dares
-
     })
+
 
 @csrf_exempt
 def api_add_social_item(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized. Please log in again."}, status=401)
     if request.method != "POST":
         return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
 
@@ -1008,13 +1022,14 @@ def api_add_social_item(request):
         import json
         payload = json.loads(request.body.decode("utf-8"))
         item_type = payload.get("type")
-        email = request.session.get('otp_email')
-        co = Company.objects.filter(email=email).first()
-        emp = Employee.objects.filter(email=email).first()
+        email = (request.session.get('otp_email') or '').strip().lower()
+
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
         if not co and emp:
             co = emp.company
         if not co:
-            return JsonResponse({"status": "error", "message": "Unauthorized"}, status=403)
+            return JsonResponse({"status": "error", "message": "Unauthorized. Workspace not found."}, status=403)
 
         new_item = None
         notif_title = ""
@@ -1022,9 +1037,9 @@ def api_add_social_item(request):
         target_str = ""
 
         if item_type == "birthday":
-            name_val = payload.get("name") or "Team Member"
-            date_val = payload.get("date") or "Soon"
-            role_val = payload.get("role") or ""
+            name_val = (payload.get("name") or '').strip() or "Team Member"
+            date_val = (payload.get("date") or '').strip() or "Soon"
+            role_val = (payload.get("role") or '').strip() or ""
             new_item = SocialItem.objects.create(
                 company=co, type='birthday',
                 title=name_val,
@@ -1036,8 +1051,8 @@ def api_add_social_item(request):
             target_str = name_val
 
         elif item_type == "topic":
-            title_val = payload.get("title") or "New Topic"
-            author_val = payload.get("author") or "Team"
+            title_val = (payload.get("title") or '').strip() or "New Topic"
+            author_val = (payload.get("author") or '').strip() or "Team"
             new_item = SocialItem.objects.create(
                 company=co, type='topic',
                 title=title_val,
@@ -1048,9 +1063,9 @@ def api_add_social_item(request):
             notif_msg = f"New discussion topic started by {author_val}"
 
         elif item_type == "dare":
-            from_val = payload.get("from") or "Challenger"
-            to_val = payload.get("to") or "All"
-            task_val = payload.get("task") or "Daily Challenge"
+            from_val = (payload.get("from") or '').strip() or "Challenger"
+            to_val = (payload.get("to") or '').strip() or "All"
+            task_val = (payload.get("task") or '').strip() or "Daily Challenge"
             new_item = SocialItem.objects.create(
                 company=co, type='dare',
                 title=from_val,
@@ -1061,10 +1076,9 @@ def api_add_social_item(request):
             notif_msg = f"Challenge from {from_val} to {to_val}"
             target_str = to_val
         else:
-            return JsonResponse({"status": "error", "message": "Unknown type"}, status=400)
+            return JsonResponse({"status": "error", "message": "Unknown item type"}, status=400)
 
         if new_item:
-            # Determine target recipients
             recipients = list(Employee.objects.filter(company=co))
             if target_str and target_str.lower() != 'all':
                 specific_emp = Employee.objects.filter(company=co, name__icontains=target_str).first()
@@ -1081,10 +1095,50 @@ def api_add_social_item(request):
                 exclude_user=emp
             )
 
-        return JsonResponse({"status": "ok"})
+        return JsonResponse({
+            "status": "ok",
+            "item": {
+                "id": new_item.id,
+                "type": new_item.type,
+                "title": new_item.title,
+                "meta_info": new_item.meta_info,
+                "content": new_item.content
+            }
+        })
 
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@csrf_exempt
+def api_delete_social_item(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+    try:
+        import json
+        payload = json.loads(request.body.decode("utf-8"))
+        item_id = payload.get("item_id") or payload.get("id")
+
+        email = (request.session.get("otp_email") or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
+        if not co and emp:
+            co = emp.company
+        if not co:
+            return JsonResponse({"status": "error", "message": "Workspace not found"}, status=403)
+
+        item = SocialItem.objects.filter(id=item_id, company=co).first()
+        if not item:
+            return JsonResponse({"status": "error", "message": "Social item not found"}, status=404)
+
+        item.delete()
+        return JsonResponse({"status": "ok", "message": "Item deleted successfully"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
 
 
 def leaves_page(request):
@@ -1323,11 +1377,11 @@ def tickets_page(request):
 
         return redirect("login")
 
-    email = request.session.get("otp_email")
+    email = (request.session.get("otp_email") or '').strip().lower()
 
-    co = Company.objects.filter(email=email).first()
+    co = Company.objects.filter(email__iexact=email).first()
 
-    emp = Employee.objects.filter(email=email).first()
+    emp = Employee.objects.filter(email__iexact=email).first()
 
     is_admin = (co is not None)
 
@@ -1342,25 +1396,35 @@ def tickets_page(request):
         return redirect('login')
 
     if is_admin:
+
         projects_list = Project.objects.filter(company=co)
-        tickets_list = Ticket.objects.filter(project__company=co).select_related('project', 'employee')
+
+        tickets_list = Ticket.objects.filter(project__company=co).select_related('project', 'employee').order_by('-created_at')
+
     else:
-        projects_list = Project.objects.filter(members__employee=emp)
-        tickets_list = Ticket.objects.filter(project__in=projects_list).select_related('project', 'employee')
+
+        projects_list = Project.objects.filter(members__employee=emp, members__is_allowed=True)
+
+        tickets_list = Ticket.objects.filter(project__in=projects_list).select_related('project', 'employee').order_by('-created_at')
 
     devs_qs = Employee.objects.filter(company=co)
 
+    total_tickets = tickets_list.count()
+    open_tickets = tickets_list.filter(status='open').count()
+    in_progress_tickets = tickets_list.filter(status='in_progress').count()
+    resolved_tickets = tickets_list.filter(status__in=['resolved', 'closed']).count()
+
     analytics = {
-
+        'total': total_tickets,
+        'open': open_tickets,
+        'in_progress': in_progress_tickets,
+        'resolved': resolved_tickets,
         'high': tickets_list.filter(priority='high').count(),
-
         'medium': tickets_list.filter(priority='medium').count(),
-
         'low': tickets_list.filter(priority='low').count()
-
     }
 
-    recent = tickets_list.order_by('-created_at')[:20]
+    recent = tickets_list[:50]
 
     return render(request, "tickets.html", {
 
@@ -1370,7 +1434,7 @@ def tickets_page(request):
 
         "recent": recent,
 
-        "developers": [{'name': d.name, 'email': d.email} for d in devs_qs],
+        "developers": [{'name': d.name, 'email': d.email, 'id': d.id} for d in devs_qs],
 
         "projects": projects_list,
 
@@ -1381,6 +1445,7 @@ def tickets_page(request):
         "is_admin": is_admin
 
     })
+
 
 @require_POST
 
@@ -3722,8 +3787,10 @@ def create_ticket(request):
         data = json.loads(request.body.decode('utf-8'))
         title = (data.get('title') or '').strip()
         project_id = data.get('project_id')
-        description = data.get('description', 'Created from dashboard quick actions') or 'Created from dashboard quick actions'
+        description = data.get('description', 'Created from quick actions') or 'Created from quick actions'
         priority = data.get('priority', 'medium')
+        status_val = data.get('status', 'open')
+        assignee_email = (data.get('assignee') or '').strip().lower()
 
         email = request.session.get('otp_email')
         if not email:
@@ -3739,7 +3806,6 @@ def create_ticket(request):
         if not title:
             return JsonResponse({'status': 'error', 'message': 'Ticket title is required'})
 
-        # Try to find the project by ID; fall back to the first project in the company
         proj = None
         if project_id:
             try:
@@ -3748,23 +3814,192 @@ def create_ticket(request):
                 proj = None
 
         if not proj:
-            # Fall back to first available project for this workspace
             proj = Project.objects.filter(company=co).first()
 
         if not proj:
-            return JsonResponse({'status': 'error', 'message': 'No project found. Please create a project first from the Departments page.'})
+            return JsonResponse({'status': 'error', 'message': 'No project found. Please create a project first.'})
 
-        # Ticket model only has: project, employee, title, description, priority
-        Ticket.objects.create(
+        assigned_emp = None
+        if assignee_email:
+            assigned_emp = Employee.objects.filter(company=co, email__iexact=assignee_email).first()
+        elif emp:
+            assigned_emp = emp
+
+        t_status = status_val if status_val in ('open', 'in_progress', 'resolved', 'closed') else 'open'
+        t_priority = priority if priority in ('high', 'medium', 'low') else 'medium'
+
+        ticket = Ticket.objects.create(
             project=proj,
-            employee=emp if emp else None,
+            employee=assigned_emp,
             title=title,
             description=description,
-            priority=priority if priority in ('high', 'medium', 'low') else 'medium',
+            priority=t_priority,
+            status=t_status,
         )
-        return JsonResponse({'status': 'success', 'message': f'Ticket "{title}" raised in project "{proj.name}"'})
+
+        if assigned_emp:
+            create_notification_for_users(
+                recipients=[assigned_emp],
+                notification_type='TICKET_ASSIGNED',
+                title=f"🎫 New Ticket Assigned: #{ticket.id}",
+                message=f"You have been assigned to ticket '{title[:30]}' in project '{proj.name}' (Priority: {t_priority.capitalize()}).",
+                link="/tickets-page/",
+                related_object_id=str(ticket.id),
+                exclude_user=emp
+            )
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Ticket "{title}" raised in project "{proj.name}"',
+            'ticket_id': ticket.id
+        })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+@csrf_exempt
+def api_update_ticket_status(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+    try:
+        import json
+        payload = json.loads(request.body.decode('utf-8'))
+        ticket_id = payload.get("ticket_id")
+        new_status = (payload.get("status") or '').strip().lower()
+
+        if new_status not in ('open', 'in_progress', 'resolved', 'closed'):
+            return JsonResponse({"status": "error", "message": "Invalid status code"}, status=400)
+
+        email = (request.session.get("otp_email") or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
+        if not co and emp:
+            co = emp.company
+        if not co:
+            return JsonResponse({"status": "error", "message": "Workspace not found"}, status=403)
+
+        ticket = Ticket.objects.filter(id=ticket_id, project__company=co).first()
+        if not ticket:
+            return JsonResponse({"status": "error", "message": "Ticket not found"}, status=404)
+
+        old_status = ticket.status
+        ticket.status = new_status
+        ticket.save()
+
+        # Notify assigned employee if status changed by another user
+        if ticket.employee and ticket.employee != emp:
+            status_display = dict(Ticket.STATUS_CHOICES).get(new_status, new_status.capitalize())
+            create_notification_for_users(
+                recipients=[ticket.employee],
+                notification_type='TICKET_STATUS_CHANGED',
+                title=f"⚡ Ticket #{ticket.id} Status Updated",
+                message=f"Status changed from {old_status.capitalize()} to {status_display} for '{ticket.title[:30]}'",
+                link="/tickets-page/",
+                related_object_id=str(ticket.id),
+                exclude_user=emp
+            )
+
+        return JsonResponse({
+            "status": "success",
+            "message": f"Ticket status updated to {new_status}",
+            "ticket": {
+                "id": ticket.id,
+                "status": ticket.status,
+                "status_display": dict(Ticket.STATUS_CHOICES).get(ticket.status, ticket.status)
+            }
+        })
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@csrf_exempt
+def api_assign_ticket(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+    try:
+        import json
+        payload = json.loads(request.body.decode('utf-8'))
+        ticket_id = payload.get("ticket_id")
+        assignee_email = (payload.get("assignee_email") or payload.get("email") or '').strip().lower()
+
+        email = (request.session.get("otp_email") or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
+        if not co and emp:
+            co = emp.company
+        if not co:
+            return JsonResponse({"status": "error", "message": "Workspace not found"}, status=403)
+
+        ticket = Ticket.objects.filter(id=ticket_id, project__company=co).first()
+        if not ticket:
+            return JsonResponse({"status": "error", "message": "Ticket not found"}, status=404)
+
+        if assignee_email:
+            assigned_emp = Employee.objects.filter(company=co, email__iexact=assignee_email).first()
+            if not assigned_emp:
+                return JsonResponse({"status": "error", "message": "Developer not found in workspace"}, status=404)
+            ticket.employee = assigned_emp
+        else:
+            ticket.employee = None
+            assigned_emp = None
+
+        ticket.save()
+
+        if assigned_emp:
+            create_notification_for_users(
+                recipients=[assigned_emp],
+                notification_type='TICKET_ASSIGNED',
+                title=f"🎫 Ticket #{ticket.id} Reassigned",
+                message=f"You have been assigned to ticket '{ticket.title[:30]}'.",
+                link="/tickets-page/",
+                related_object_id=str(ticket.id),
+                exclude_user=emp
+            )
+
+        return JsonResponse({
+            "status": "success",
+            "message": "Ticket assignment updated",
+            "assignee_name": assigned_emp.name if assigned_emp else "Unassigned"
+        })
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+
+@csrf_exempt
+def api_delete_ticket(request):
+    if not request.session.get("verified"):
+        return JsonResponse({"status": "error", "message": "Unauthorized"}, status=401)
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+    try:
+        import json
+        payload = json.loads(request.body.decode('utf-8'))
+        ticket_id = payload.get("ticket_id")
+
+        email = (request.session.get("otp_email") or '').strip().lower()
+        co = Company.objects.filter(email__iexact=email).first()
+        emp = Employee.objects.filter(email__iexact=email).first()
+        if not co and emp:
+            co = emp.company
+        if not co:
+            return JsonResponse({"status": "error", "message": "Workspace not found"}, status=403)
+
+        ticket = Ticket.objects.filter(id=ticket_id, project__company=co).first()
+        if not ticket:
+            return JsonResponse({"status": "error", "message": "Ticket not found"}, status=404)
+
+        ticket.delete()
+        return JsonResponse({"status": "success", "message": "Ticket deleted successfully"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
 
 
 def api_notifications(request):

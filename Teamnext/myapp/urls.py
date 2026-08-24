@@ -29,6 +29,10 @@ urlpatterns = [
     path("dashboard/create-ticket/", views.create_ticket, name="dashboard_create_ticket"),
 
     path("tickets-page/", views.tickets_page, name="tickets_page"),
+    path("api/tickets/update-status/", views.api_update_ticket_status, name="api_update_ticket_status"),
+    path("api/tickets/assign/", views.api_assign_ticket, name="api_assign_ticket"),
+    path("api/tickets/delete/", views.api_delete_ticket, name="api_delete_ticket"),
+
 
     path("email-page/", views.email_page, name="email_page"),
 
@@ -54,6 +58,8 @@ urlpatterns = [
     path("social-page/", views.social_page, name="social_page"),
 
     path("api/social/add/", views.api_add_social_item, name="api_add_social"),
+    path("api/social/delete/", views.api_delete_social_item, name="api_delete_social"),
+
 
     path("leaves-page/", views.leaves_page, name="leaves_page"),
 
