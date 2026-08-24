@@ -55,6 +55,9 @@ urlpatterns = [
 
     path("settings-page/", views.settings_page, name="settings_page"),
 
+    path("help-centre-page/", views.help_centre_page, name="help_centre_page"),
+    path("api/help-centre/contact/", views.api_contact_help_centre, name="api_contact_help_centre"),
+
     path("social-page/", views.social_page, name="social_page"),
 
     path("api/social/add/", views.api_add_social_item, name="api_add_social"),

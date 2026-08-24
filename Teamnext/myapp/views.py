@@ -849,6 +849,67 @@ def settings_page(request):
 
     })
 
+def help_centre_page(request):
+    if not request.session.get('verified'):
+        return redirect('login')
+
+    email = (request.session.get('otp_email') or '').strip().lower()
+    co = Company.objects.filter(email__iexact=email).first()
+    if not co:
+        emp = Employee.objects.filter(email__iexact=email).first()
+        co = emp.company if emp else None
+
+    return render(request, 'help_centre.html', {
+        'company_name': co.name if co else "TeamNext",
+        'email': email,
+        'active_page': 'help_centre'
+    })
+
+@csrf_exempt
+def api_contact_help_centre(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid HTTP method'}, status=405)
+    
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    email = (data.get('email') or request.session.get('otp_email') or '').strip()
+    category = data.get('category', 'General Technical Support')
+    priority = data.get('priority', 'Medium')
+    subject = (data.get('subject') or '').strip()
+    message = (data.get('message') or '').strip()
+
+    if not email or not subject or not message:
+        return JsonResponse({'status': 'error', 'message': 'Email, subject, and message are required'}, status=400)
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <h2 style="color: #2563eb; margin-top: 0;">New Support Inquiry - TeamNext Help Centre</h2>
+        <p><strong>From:</strong> {email}</p>
+        <p><strong>Category:</strong> {category}</p>
+        <p><strong>Priority:</strong> {priority}</p>
+        <p><strong>Subject:</strong> {subject}</p>
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 15px 0;">
+        <p><strong>Message Detail:</strong></p>
+        <p style="background: #f9fafb; padding: 12px; border-radius: 6px; white-space: pre-wrap;">{message}</p>
+    </div>
+    """
+    plain_text = f"Support Inquiry\nFrom: {email}\nCategory: {category}\nPriority: {priority}\nSubject: {subject}\n\nMessage:\n{message}"
+
+    try:
+        send_brevo_email(
+            to_emails="main@teamnexterp.com",
+            subject=f"[TeamNext Support] [{priority}] {subject}",
+            html_content=html_content,
+            plain_text=plain_text
+        )
+    except Exception as e:
+        logger.warning(f"Help centre email dispatch error: {e}")
+
+    return JsonResponse({'status': 'ok', 'message': 'Inquiry dispatched to main@teamnexterp.com'})
+
 def profile_page(request):
     if not request.session.get('verified'):
         return redirect('login')
@@ -1659,6 +1720,12 @@ def quick_redirect(request, target=None):
         'email-page': 'email_page',
 
         'users': 'users_page',
+
+        'help': 'help_centre_page',
+
+        'help-centre': 'help_centre_page',
+
+        'help-centre-page': 'help_centre_page',
 
         'logout': 'logout',
 

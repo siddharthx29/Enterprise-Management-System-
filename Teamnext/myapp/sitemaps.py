@@ -16,7 +16,8 @@ class StaticViewSitemap(Sitemap):
             "finance_page",
             "hr_page",
             "inventory_page",
-            "reports_page"
+            "reports_page",
+            "help_centre_page"
         ]
 
     def location(self, item):
